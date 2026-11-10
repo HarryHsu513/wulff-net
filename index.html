@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Wulff 赤平投影工作台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: two floating cards on a soft system background — the net on the left, controls on the right (Apple-style). */
+:root{
+  --bg:#f5f5f7; --card:#ffffff; --ink:#1d1d1f; --sec:#6e6e73; --ter:#aeaeb2; --sep:rgba(60,60,67,.13);
+  --fill:rgba(118,118,128,.12); --fill2:rgba(118,118,128,.07); --segon:#ffffff;
+  --blue:#007aff; --tint:rgba(0,122,255,.10); --green:#34c759; --sel:#ff2d55; --sym:#5856d6;
+  --g-minor:rgba(60,60,67,.09); --g-major:rgba(60,60,67,.24);
+  --c0:#ff3b30; --c1:#007aff; --c2:#34c759; --c3:#ff9500; --c4:#af52de; --c5:#a2845e; --c6:#30b0c7; --c7:#5856d6;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 24px rgba(0,0,0,.06);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000; --card:#1c1c1e; --ink:#f5f5f7; --sec:#98989d; --ter:#636366; --sep:rgba(84,84,88,.55);
+  --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.14); --segon:#636366;
+  --blue:#0a84ff; --tint:rgba(10,132,255,.18); --green:#30d158; --sel:#ff375f; --sym:#7d7aff;
+  --g-minor:rgba(235,235,245,.08); --g-major:rgba(235,235,245,.22);
+  --c0:#ff453a; --c1:#0a84ff; --c2:#30d158; --c3:#ff9f0a; --c4:#bf5af2; --c5:#ac8e68; --c6:#40c8e0; --c7:#7d7aff;
+  --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --card:#1c1c1e; --ink:#f5f5f7; --sec:#98989d; --ter:#636366; --sep:rgba(84,84,88,.55);
+  --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.14); --segon:#636366;
+  --blue:#0a84ff; --tint:rgba(10,132,255,.18); --green:#30d158; --sel:#ff375f; --sym:#7d7aff;
+  --g-minor:rgba(235,235,245,.08); --g-major:rgba(235,235,245,.22);
+  --c0:#ff453a; --c1:#0a84ff; --c2:#30d158; --c3:#ff9f0a; --c4:#bf5af2; --c5:#ac8e68; --c6:#40c8e0; --c7:#7d7aff;
+  --shadow:none; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+button,input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.top{max-width:1280px;margin:0 auto 18px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.top p{margin:4px 0 0;color:var(--sec);font-size:15px}
+.top .sp{flex:1}
+.app{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+@media (min-width:980px){.app{grid-template-columns:minmax(0,1.2fr) minmax(360px,1fr)}.stage{position:sticky;top:max(16px,env(safe-area-inset-top,0px));align-self:start}}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);min-width:0}
+.stage{padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel{padding:16px 18px 20px;display:flex;flex-direction:column;gap:18px}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
+.seg button{flex:1;border:0;background:transparent;padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;color:var(--ink)}
+.seg button[aria-selected="true"]{background:var(--segon);box-shadow:0 3px 8px rgba(0,0,0,.10),0 0 0 .5px rgba(0,0,0,.04)}
+.seg.inline{display:inline-flex}
+.btn{border:0;border-radius:980px;padding:7px 16px;background:var(--tint);color:var(--blue);font-weight:500;font-size:14px;cursor:pointer;white-space:nowrap;line-height:1.3}
+.btn.pri{background:var(--blue);color:#fff}
+.btn.plain{background:transparent;padding:7px 8px}
+.btn:disabled{opacity:.35;cursor:default}
+.btn:focus-visible,.seg button:focus-visible,.tile:focus-visible,.in:focus-visible,.sw:focus-visible{outline:3px solid color-mix(in srgb,var(--blue) 45%,transparent);outline-offset:1px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.tile{border:0;border-radius:12px;background:var(--fill2);padding:11px 8px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink)}
+.tile:hover:not(:disabled){background:var(--fill)}
+.tile:disabled{color:var(--ter);cursor:default}
+.in{border:0;background:var(--fill);border-radius:10px;padding:8px 11px;min-width:0;font-variant-numeric:tabular-nums}
+.in::placeholder{color:var(--ter)}
+.w-s{width:4.6em}.w-m{width:6.2em}.grow{flex:1;min-width:5em}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lab{font-size:13px;color:var(--sec)}
+.sec-h{font-size:13px;font-weight:600;color:var(--sec);letter-spacing:.01em;margin:0 0 8px}
+.group{display:flex;flex-direction:column}
+.swl{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;white-space:nowrap}
+.sw{appearance:none;-webkit-appearance:none;width:42px;height:25px;border-radius:999px;background:var(--fill);position:relative;cursor:pointer;transition:background .2s;margin:0;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s}
+.sw:checked{background:var(--green)}.sw:checked::after{transform:translateX(17px)}
+input[type=range]{accent-color:var(--blue)}
+.cwrap{position:relative;width:100%;max-width:min(100%,calc(100vh - 200px));min-width:min(100%,300px);margin:0 auto;aspect-ratio:1/1}
+@media (max-width:979px){.cwrap{max-width:100%}}
+#net,#cv3{position:absolute;inset:0;width:100%;height:100%;display:block}
+#net{touch-action:manipulation;cursor:crosshair;user-select:none}
+#cv3{touch-action:none;cursor:grab}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.bar input[type=range]{flex:1;min-width:120px;max-width:260px}
+.foot{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13px;color:var(--sec);min-height:24px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--fill2);border-radius:999px;padding:2px 9px;font-size:13px;color:var(--ink)}
+.chip i{width:8px;height:8px;border-radius:50%}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+.ob{text-decoration:overline}
+.ex-title{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:4px 0 2px}
+.given{font-size:13.5px;color:var(--sec)}
+.steps{list-style:none;margin:0;padding:0;border-radius:12px;background:var(--fill2);overflow:hidden}
+.steps li{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;font-size:14.5px;position:relative}
+.steps li+li::before{content:"";position:absolute;top:0;left:48px;right:0;border-top:.5px solid var(--sep)}
+.steps .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;flex:none;border:1.5px solid var(--ter);color:var(--sec)}
+.steps li.done .n{border-color:transparent;background:var(--fill);color:var(--sec)}
+.steps li.cur .n{border-color:var(--blue);background:var(--blue);color:#fff}
+.steps li.cur{font-weight:600}
+.note{font-size:14.5px;margin:0}
+.ans{border-radius:12px;background:var(--tint);padding:10px 14px;font-size:14.5px}
+.ans b{color:var(--blue);font-weight:600;margin-right:8px}
+.nav{display:flex;gap:10px}
+.nav .btn{flex:1;padding:10px}
+.result{font-size:14px;display:flex;flex-direction:column;gap:6px}
+.result div{padding:8px 12px;border-radius:10px;background:var(--fill2)}
+.result div:first-child{background:var(--tint)}
+.forms{display:flex;flex-direction:column;border-radius:12px;background:var(--fill2);overflow:hidden}
+.forms .f{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:14px;position:relative}
+.forms .f+.f::before{content:"";position:absolute;top:0;left:31px;right:0;border-top:.5px solid var(--sep)}
+.forms .f .nm{flex:1;min-width:0}
+.forms .f .nm small{color:var(--sec);margin-left:6px}
+.x{border:0;background:transparent;color:var(--ter);font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
+.muted{color:var(--sec)}
+svg text{font-family:var(--font)}
+</style>
+
+<header class="top">
+  <div>
+    <h1>赤平投影</h1>
+    <p>網固定、轉描圖紙 · Φ 從東（b 軸）起算，ρ 從圓心起算</p>
+  </div>
+  <span class="sp"></span>
+  <button class="btn" id="undoBtn">復原</button>
+  <button class="btn" id="clearBtn">清除</button>
+</header>
+
+<main class="app">
+  <section class="card stage" aria-label="投影圖">
+    <div class="seg inline" role="tablist" id="viewSeg" style="align-self:center">
+      <button role="tab" data-view="net" aria-selected="true">赤平投影</button>
+      <button role="tab" data-view="3d" aria-selected="false">3D 球面</button>
+    </div>
+    <div class="cwrap" id="wrapNet"><svg id="net" viewBox="-410 -410 820 820" role="img" aria-label="Wulff net"></svg></div>
+    <div class="cwrap" id="wrap3d" hidden><canvas id="cv3" aria-label="3D 球面投影"></canvas></div>
+    <div class="bar" id="barNet">
+      <span class="lab">描圖紙轉角</span>
+      <input type="range" id="netRot" min="-180" max="180" step="0.5" value="0" aria-label="描圖紙轉角（正值為逆時針）">
+      <span class="num" id="netRotVal" style="min-width:6.5em">0°</span>
+      <button class="btn" id="netAlign">對齊所選</button>
+      <label class="swl"><input type="checkbox" class="sw" id="clickAdd"> 點擊加點</label>
+    </div>
+    <div class="bar" id="bar3d" hidden>
+      <label class="swl"><input type="checkbox" class="sw" data-o3="crystal" checked> 晶體</label>
+      <label class="swl"><input type="checkbox" class="sw" data-o3="rays" checked> 投影射線</label>
+      <span style="flex:1"></span>
+      <button class="btn" id="v3top">俯視</button>
+      <button class="btn" id="v3def">重設</button>
+    </div>
+    <div class="foot" id="status"></div>
+  </section>
+
+  <aside class="card panel" aria-label="控制">
+    <div class="seg" role="tablist" id="paneSeg">
+      <button role="tab" data-pane="ex" aria-selected="true">練習</button>
+      <button role="tab" data-pane="con" aria-selected="false">作圖</button>
+      <button role="tab" data-pane="cry" aria-selected="false">晶體</button>
+    </div>
+
+    <div id="pane-ex" class="group" style="gap:14px">
+      <select id="exSel" class="in" aria-label="選擇練習"></select>
+      <div>
+        <div class="ex-title" id="exTitle"></div>
+        <div class="given" id="exGiven"></div>
+      </div>
+      <ol class="steps" id="exSteps"></ol>
+      <p class="note" id="exNote"></p>
+      <div class="ans" id="exAns" hidden></div>
+      <div class="nav">
+        <button class="btn" id="exPrev">上一步</button>
+        <button class="btn pri" id="exNext">下一步</button>
+      </div>
+    </div>
+
+    <div id="pane-con" class="group" style="gap:20px" hidden>
+      <div class="group">
+        <h3 class="sec-h">新增</h3>
+        <div class="row">
+          <input id="ptLab" class="in w-s" placeholder="名稱">
+          <input id="ptPhi" class="in grow" placeholder="Φ">
+          <input id="ptRho" class="in grow" placeholder="ρ">
+          <button class="btn pri" id="ptAdd">加點</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="hklIn" class="in grow" placeholder="(hkl)，例如 111、1-10">
+          <button class="btn" id="hklAdd">加晶面</button>
+        </div>
+      </div>
+      <div class="group">
+        <h3 class="sec-h">作圖 <span class="muted" id="selHint" style="font-weight:400"></span></h3>
+        <div class="tiles">
+          <button class="tile" data-act="gc2" title="選 2 點">大圓</button>
+          <button class="tile" data-act="angle" title="選 2 點">夾角</button>
+          <button class="tile" data-act="zone" title="選 2 點">晶帶軸</button>
+          <button class="tile" data-act="gcOfPole" title="選 1 點">極的大圓</button>
+          <button class="tile" data-act="sc" title="選 1 點">小圓</button>
+          <button class="tile" data-act="x" title="選 2 個圓">交點</button>
+          <button class="tile" data-act="anti" title="選 1 點">Antipole</button>
+          <button class="tile" data-act="toPrim" title="選 2 點">轉到基圓</button>
+          <button class="tile" data-act="rotate" title="選點">旋轉</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <span class="lab">小圓半徑</span><input id="scR" class="in w-s" value="40">
+          <span class="lab">旋轉角</span><input id="rotDeg" class="in w-s" value="30">
+          <span style="flex:1"></span>
+          <button class="btn plain" id="delSel">刪除所選</button>
+        </div>
+      </div>
+      <div class="group">
+        <h3 class="sec-h">結果</h3>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+
+    <div id="pane-cry" class="group" style="gap:20px" hidden>
+      <div class="group">
+        <h3 class="sec-h">晶系</h3>
+        <div class="row">
+          <select id="sysSel" class="in grow" aria-label="晶系"></select>
+          <select id="pgSel" class="in" aria-label="點群"></select>
+        </div>
+        <div class="row" id="latInputs" style="margin-top:8px"></div>
+      </div>
+      <div class="group">
+        <h3 class="sec-h">晶形</h3>
+        <div class="row">
+          <input id="formIn" class="in grow" placeholder="{hkl}，例如 111">
+          <button class="btn pri" id="formAdd">加入</button>
+        </div>
+        <div class="forms" id="formList" style="margin-top:10px"></div>
+        <div class="row" style="margin-top:10px;justify-content:space-between">
+          <span class="lab" id="formTotal"></span>
+          <label class="swl"><input type="checkbox" class="sw" id="symSw"> 對稱要素</label>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+'use strict';
+/* ---------- 數學 ---------- */
+const D2R=Math.PI/180,R2D=180/Math.PI;
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const vlen=a=>Math.hypot(a[0],a[1],a[2]),unit=a=>{const n=vlen(a);return n<1e-12?[0,0,1]:[a[0]/n,a[1]/n,a[2]/n];},neg=a=>[-a[0],-a[1],-a[2]];
+function normPhi(p){p=((p+180)%360+360)%360-180;return p<=-180+1e-9?180:p;}
+function fromPR(phi,rho){const p=phi*D2R,r=rho*D2R;return [Math.sin(r)*Math.sin(p),Math.sin(r)*Math.cos(p),Math.cos(r)];}
+function toPR(v){v=unit(v);const h=Math.hypot(v[0],v[1]);return {phi:h<1e-9?0:normPhi(Math.atan2(v[0],v[1])*R2D),rho:Math.acos(clamp(v[2],-1,1))*R2D};}
+function angDeg(a,b){return Math.acos(clamp(dot(unit(a),unit(b)),-1,1))*R2D;}
+function rodr(v,k,deg){k=unit(k);const t=deg*D2R,c=Math.cos(t),s=Math.sin(t);return add(add(mul(v,c),mul(cross(k,v),s)),mul(k,dot(k,v)*(1-c)));}
+function perp(a){return Math.abs(a[2])<0.9?unit(cross(a,[0,0,1])):unit(cross(a,[1,0,0]));}
+function upper(v){return v[2]<-1e-12?neg(v):v;}
+function slerp(a,b,t){const w=angDeg(a,b)*D2R;if(w<1e-9)return a;const s=Math.sin(w);return unit(add(mul(a,Math.sin((1-t)*w)/s),mul(b,Math.sin(t*w)/s)));}
+function dipPoint(p){p=upper(unit(p));if(Math.hypot(p[0],p[1])<1e-9)return [0,1,0];return upper(unit(cross(cross(p,[0,0,1]),p)));}
+const M3={
+  rot(k,deg){k=unit(k);const t=deg*D2R,c=Math.cos(t),s=Math.sin(t),C=1-c,[x,y,z]=k;return [[c+x*x*C,x*y*C-z*s,x*z*C+y*s],[y*x*C+z*s,c+y*y*C,y*z*C-x*s],[z*x*C-y*s,z*y*C+x*s,c+z*z*C]];},
+  mul(A,B){return A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));},
+  vec(A,v){return [dot(A[0],v),dot(A[1],v),dot(A[2],v)];},
+  neg(A){return A.map(r=>r.map(x=>-x));},I(){return [[1,0,0],[0,1,0],[0,0,1]];},
+  mirror(n){n=unit(n);return [0,1,2].map(i=>[0,1,2].map(j=>(i===j?1:0)-2*n[i]*n[j]));},
+  det(A){return dot(A[0],cross(A[1],A[2]));},key(A){return A.map(r=>r.map(x=>Math.round(x*1e4)+0).join(',')).join(';');}
+};
+function parseAng(s){if(typeof s==='number')return s;s=String(s||'').trim();if(!s)return NaN;
+  s=s.replace(/(\d)½/g,'$1.5').replace(/½/g,'0.5').replace(/[−–]/g,'-');const ng=/^-/.test(s);const n=s.match(/\d+(?:\.\d+)?/g);if(!n)return NaN;
+  let v=+n[0];if(n[1]!=null)v+=n[1]/60;if(n[2]!=null)v+=n[2]/3600;return ng?-v:v;}
+function fmtDM(d){const sg=d<0?'−':'';d=Math.abs(d);let D=Math.floor(d),m=Math.round((d-D)*600)/10;if(m>=60){D++;m=0;}return `${sg}${D}°${m<10?'0':''}${m.toFixed(1).replace(/\.0$/,'')}′`;}
+function f1(d){return (Math.abs(d)<0.05?0:d).toFixed(1).replace('-','−')+'°';}
+function fPR(v){const {phi,rho}=toPR(v);return `(${f1(phi)}, ${f1(rho)})${rho>90+1e-6?' 下半球':''}`;}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- 晶體學 ---------- */
+const SYS={
+  cubic:{name:'等軸晶系',pgs:['23','m-3','432','-43m','m-3m'],fields:[],def:{a:1,b:1,c:1,al:90,be:90,ga:90}},
+  tetragonal:{name:'正方晶系',pgs:['4','-4','4/m','422','4mm','-42m','4/mmm'],fields:['c'],def:{a:1,b:1,c:1,al:90,be:90,ga:90}},
+  orthorhombic:{name:'斜方晶系',pgs:['222','mm2','mmm'],fields:['a','c'],def:{a:1,b:1,c:1,al:90,be:90,ga:90}},
+  hexagonal:{name:'六方晶系',pgs:['6','-6','6/m','622','6mm','-6m2','6/mmm'],fields:['c'],def:{a:1,b:1,c:1,al:90,be:90,ga:120},hex:true},
+  trigonal:{name:'三方晶系',pgs:['3','-3','32','3m','-3m'],fields:['c'],def:{a:1,b:1,c:1,al:90,be:90,ga:120},hex:true},
+  monoclinic:{name:'單斜晶系',pgs:['2','m','2/m'],fields:['a','c','be'],def:{a:1,b:1,c:1,al:90,be:105,ga:90}},
+  triclinic:{name:'三斜晶系',pgs:['1','-1'],fields:['a','c','al','be','ga'],def:{a:1,b:1,c:1,al:95,be:100,ga:85}}
+};
+const PG={'1':[],'-1':['i'],'2':['2y'],'m':['my'],'2/m':['2y','i'],'222':['2x','2y'],'mm2':['mx','my'],'mmm':['2x','2y','i'],
+  '4':['4z'],'-4':['-4z'],'4/m':['4z','i'],'422':['4z','2x'],'4mm':['4z','mx'],'-42m':['-4z','2x'],'4/mmm':['4z','2x','i'],
+  '3':['3z'],'-3':['3z','i'],'32':['3z','2y'],'3m':['3z','my'],'-3m':['3z','2y','i'],
+  '6':['6z'],'-6':['3z','mz'],'6/m':['6z','i'],'622':['6z','2y'],'6mm':['6z','my'],'-6m2':['3z','mz','my'],'6/mmm':['6z','2y','i'],
+  '23':['2z','2x','3d'],'m-3':['2z','2x','3d','i'],'432':['4z','3d'],'-43m':['-4z','3d'],'m-3m':['4z','3d','i']};
+const PGNAME={'1':'1','-1':'1̄','2':'2','m':'m','2/m':'2/m','222':'222','mm2':'mm2','mmm':'2/m 2/m 2/m','4':'4','-4':'4̄','4/m':'4/m','422':'422','4mm':'4mm','-42m':'4̄2m','4/mmm':'4/m 2/m 2/m','3':'3','-3':'3̄','32':'32','3m':'3m','-3m':'3̄ 2/m','6':'6','-6':'6̄','6/m':'6/m','622':'622','6mm':'6mm','-6m2':'6̄m2','6/mmm':'6/m 2/m 2/m','23':'23','m-3':'2/m 3̄','432':'432','-43m':'4̄3m','m-3m':'4/m 3̄ 2/m'};
+function genOp(g){const X=[1,0,0],Y=[0,1,0],Z=[0,0,1];switch(g){
+  case 'i':return M3.neg(M3.I());case '2x':return M3.rot(X,180);case '2y':return M3.rot(Y,180);case '2z':return M3.rot(Z,180);
+  case 'mx':return M3.mirror(X);case 'my':return M3.mirror(Y);case 'mz':return M3.mirror(Z);
+  case '3z':return M3.rot(Z,120);case '4z':return M3.rot(Z,90);case '6z':return M3.rot(Z,60);case '-4z':return M3.neg(M3.rot(Z,90));case '3d':return M3.rot([1,1,1],120);}}
+const _pg={};
+function groupOps(pg){if(_pg[pg])return _pg[pg];const gens=(PG[pg]||[]).map(genOp);const ops=[M3.I()];const keys=new Set([M3.key(ops[0])]);
+  for(let i=0;i<ops.length&&ops.length<200;i++)for(const g of gens){const m=M3.mul(ops[i],g);const k=M3.key(m);if(!keys.has(k)){keys.add(k);ops.push(m);}}return (_pg[pg]=ops);}
+function buildLat(L){const ca=Math.cos(L.al*D2R),cb=Math.cos(L.be*D2R),cg=Math.cos(L.ga*D2R),sa=Math.sin(L.al*D2R);
+  const c=[0,0,L.c],b=[0,L.b*sa,L.b*ca];const az=cb,ay=(cg-ca*cb)/sa,ax=Math.sqrt(Math.max(1e-12,1-ay*ay-az*az));const a=[L.a*ax,L.a*ay,L.a*az];const V=dot(a,cross(b,c));
+  return {a,b,c,as:mul(cross(b,c),1/V),bs:mul(cross(c,a),1/V),cs:mul(cross(a,b),1/V)};}
+function latticeOf(sys,p){const L={...SYS[sys].def,...p};if(sys==='cubic'){L.b=L.c=L.a;}if(sys==='tetragonal'||SYS[sys].hex)L.b=L.a;
+  if(sys!=='triclinic'&&sys!=='monoclinic'){L.al=90;L.be=90;}if(sys==='monoclinic'){L.al=90;L.ga=90;}if(SYS[sys].hex)L.ga=120;else if(sys!=='triclinic'&&sys!=='monoclinic')L.ga=90;return L;}
+function gvec(B,h){return add(add(mul(B.as,h[0]),mul(B.bs,h[1])),mul(B.cs,h[2]));}
+function dvec(B,u){return add(add(mul(B.a,u[0]),mul(B.b,u[1])),mul(B.c,u[2]));}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;}
+function integerize(v){const nz=v.filter(x=>Math.abs(x)>1e-6);if(!nz.length)return null;const m0=Math.min(...nz.map(Math.abs));const base=v.map(x=>x/m0);
+  for(let m=1;m<=12;m++){const w=base.map(x=>x*m);if(w.every(x=>Math.abs(x-Math.round(x))<0.03*Math.max(1,m/3))){const r=w.map(x=>Math.round(x)+0);const g=r.reduce((a,b)=>gcd(a,b),0)||1;return r.map(x=>x/g+0);}}return null;}
+function parseIdx(s){s=String(s||'').replace(/[(){}\[\]<>]/g,' ').trim();if(!s)return null;s=s.replace(/(\d)[̄̅]/g,'-$1').replace(/[−–]/g,'-');
+  const parts=/[\s,]/.test(s)?s.split(/[\s,]+/).filter(Boolean):s.match(/-?\d/g);if(!parts)return null;const n=parts.map(Number);
+  if(n.some(x=>!Number.isInteger(x))||(n.length!==3&&n.length!==4))return null;return n;}
+function to3(n){if(!n)return null;if(n.length===3)return n;if(n[2]!==-(n[0]+n[1]))return null;return [n[0],n[1],n[3]];}
+function uvw4(U){const u=2*U[0]-U[1],v=2*U[1]-U[0],t=-(u+v),w=3*U[2];const g=[u,v,t,w].reduce((a,b)=>gcd(a,b),0)||1;return [u/g,v/g,t/g,w/g];}
+function idxParts(h,hex,dir){return dir?(hex?uvw4(h):h):(hex?[h[0],h[1],-(h[0]+h[1]),h[2]]:h);}
+function idxHTML(h,br='()',hex=S.lat.hex,dir=false){const a=idxParts(h,hex,dir);const big=a.some(x=>Math.abs(x)>9);return br[0]+a.map(x=>x<0?`<span class="ob">${-x}</span>`:`${x}`).join(big?' ':'')+br[1];}
+function idxSVG(h,br='()',hex=S.lat.hex,dir=false){const a=idxParts(h,hex,dir);const big=a.some(x=>Math.abs(x)>9);return br[0]+a.map(x=>x<0?`<tspan text-decoration="overline">${-x}</tspan>`:`${x}`).join(big?' ':'')+br[1];}
+function idxPlain(h,br='()',hex=S.lat.hex,dir=false){const a=idxParts(h,hex,dir);const big=a.some(x=>Math.abs(x)>9);return br[0]+a.map(x=>x<0?String(-x).split('').map(d=>d+'̅').join(''):String(x)).join(big?' ':'')+br[1];}
+
+/* ---------- 狀態 ---------- */
+const S={items:[],forms:[],sel:[],netRot:0,nextId:1,sys:'cubic',pg:'m-3m',latp:{...SYS.cubic.def},lat:null,B:null,view:'net',clickAdd:false,showSym:false,log:[]};
+const NC=8;let colorCursor=0;const nextColor=()=>(colorCursor++)%NC;
+function setLat(){S.lat=latticeOf(S.sys,S.latp);S.lat.hex=!!SYS[S.sys].hex;S.B=buildLat(S.lat);}setLat();
+const hist=[];
+function snap(){hist.push(JSON.stringify({items:S.items,forms:S.forms,netRot:S.netRot,sys:S.sys,pg:S.pg,latp:S.latp,nextId:S.nextId}));if(hist.length>60)hist.shift();}
+function undo(){const s=hist.pop();if(!s)return;Object.assign(S,JSON.parse(s));S.sel=S.sel.filter(id=>byId(id));setLat();syncCrystal();syncRot();renderAll();}
+const byId=id=>S.items.find(i=>i.id===id);
+function autoLabel(prefix){const u=new Set(S.items.map(i=>i.label));if(prefix&&!u.has(prefix))return prefix;if(!prefix){for(const c of 'ABCDEFGHJKLMNPQRSTUVWXYZ')if(!u.has(c))return c;prefix='P';}let n=1;while(u.has(prefix+n))n++;return prefix+n;}
+function addItem(o){const it={id:S.nextId++,visible:true,color:o.color??nextColor(),...o};S.items.push(it);return it;}
+const addPoint=(v,label,o={})=>addItem({kind:'pt',v:unit(v),label:label??autoLabel(),...o});
+const addGC=(p,label,o={})=>addItem({kind:'gc',v:upper(unit(p)),label:label??'',...o});
+const addSC=(a,r,label,o={})=>addItem({kind:'sc',v:unit(a),r,label:label??'',...o});
+const addArc=(a,b,label,o={})=>addItem({kind:'arc',a:unit(a),b:unit(b),label:label??'',...o});
+const addPath=(pts,o={})=>addItem({kind:'path',pts,label:'',...o});
+function nameHTML(it){const h=it.hkl?idxHTML(it.hkl,it.dir?'[]':'()',S.lat.hex,it.dir):'';return esc(it.label||'')+h||'#'+it.id;}
+function nameSVG(it){return esc(it.label||'')+(it.hkl?idxSVG(it.hkl,it.dir?'[]':'()',S.lat.hex,it.dir):'');}
+function namePlain(it){return (it.label||'')+(it.hkl?idxPlain(it.hkl,it.dir?'[]':'()',S.lat.hex,it.dir):'');}
+function log(html){S.log.unshift(html);if(S.log.length>4)S.log.pop();renderResult();}
+
+/* ---------- 投影 ---------- */
+const RN=300;
+function P0(v){if(v[2]>=0){const k=RN/(1+v[2]);return [v[1]*k,v[0]*k,false];}const k=RN/(1-v[2]);return [v[1]*k,v[0]*k,true];}
+/* 描圖紙逆時針轉 netRot 度：紙上 Φ 方向出現在螢幕的 Φ − netRot */
+function rot2(x,y,deg){const a=deg*D2R,c=Math.cos(a),s=Math.sin(a);return [x*c-y*s,x*s+y*c];}
+function P(v){const r=P0(v);const q=rot2(r[0],r[1],-S.netRot);return [q[0],q[1],r[2]];}
+function PS(v){const d=1+v[2];if(d<1e-4)return null;const k=RN/d;return rot2(v[1]*k,v[0]*k,-S.netRot);}
+function invP(X0,Y0){const [X,Y]=rot2(X0,Y0,S.netRot);const x=X/RN,y=Y/RN,r2=x*x+y*y,z=(1-r2)/(1+r2),s=1+z;return unit([y*s,x*s,z]);}
+function circlePts(axis,r,n=360){const a=unit(axis),u=perp(a),w=cross(a,u),c=Math.cos(r*D2R),s=Math.sin(r*D2R);const o=[];for(let i=0;i<n;i++){const t=i/n*2*Math.PI;o.push(add(mul(a,c),add(mul(u,s*Math.cos(t)),mul(w,s*Math.sin(t)))));}return o;}
+const fx=x=>x.toFixed(1);
+function polyD(xy){let d='',pen=false;for(const p of xy){if(!p||Math.hypot(p[0],p[1])>RN*1.45){pen=false;continue;}d+=(pen?'L':'M')+fx(p[0])+' '+fx(p[1]);pen=true;}return d;}
+function curvePaths(pts,closed,outside){const seq=closed?pts.concat([pts[0]]):pts;const runs=[];let cur=null;
+  for(let i=0;i<seq.length;i++){const p=seq[i],up=p[2]>=0;if(!cur){cur={up,pts:[p]};runs.push(cur);continue;}if(up===cur.up){cur.pts.push(p);continue;}
+    const q=seq[i-1];const t=q[2]/(q[2]-p[2]);const m=unit(add(q,mul(sub(p,q),t)));const mm=unit([m[0],m[1],0]);cur.pts.push(mm);cur={up,pts:[mm,p]};runs.push(cur);}
+  if(closed&&runs.length>1&&runs[0].up===runs[runs.length-1].up){const l=runs.pop();runs[0].pts=l.pts.concat(runs[0].pts.slice(1));}
+  let solid='',outer='',low='';for(const r of runs){if(r.up)solid+=polyD(r.pts.map(P));else{if(outside)outer+=polyD(r.pts.map(PS));low+=polyD(r.pts.map(P));}}return {solid,outer,low};}
+function scCenter(axis,r){const {phi,rho}=toPR(axis);const r1=rho-r,r2=rho+r;if(r2>90)return null;const p1=P(fromPR(r1>=0?phi:phi+180,Math.abs(r1))),p2=P(fromPR(phi,r2));return [(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];}
+
+/* ---------- SVG ---------- */
+const svg=document.getElementById('net');let netCache=null,K=1;
+function buildNet(){let mi='',ma='';
+  for(let L=-88;L<=88;L+=2){const maj=L%10===0,sL=Math.sin(L*D2R),cL=Math.cos(L*D2R),pts=[];for(let t=maj?0:10;t<=(maj?180:170);t+=3){const tr=t*D2R;pts.push(P0([Math.cos(tr),Math.sin(tr)*sL,Math.sin(tr)*cL]));}if(maj)ma+=polyD(pts);else mi+=polyD(pts);}
+  for(let T=2;T<=178;T+=2){const maj=T%10===0,cT=Math.cos(T*D2R),sT=Math.sin(T*D2R),pts=[];for(let s=0;s<=180;s+=3){const sr=s*D2R;pts.push(P0([cT,sT*Math.cos(sr),sT*Math.sin(sr)]));}if(maj)ma+=polyD(pts);else mi+=polyD(pts);}
+  netCache={mi,ma};}
+function ringSVG(){const R=S.netRot;const at=(p,r)=>{const a=(p-R)*D2R;return [Math.cos(a)*r,Math.sin(a)*r];};
+  let s=`<circle r="${RN}" fill="none" stroke="var(--ink)" stroke-width="1.4"/>`;
+  for(let p=-180;p<180;p+=10){const l=p%30===0?8:4,[x1,y1]=at(p,RN),[x2,y2]=at(p,RN+l);s+=`<line x1="${fx(x1)}" y1="${fx(y1)}" x2="${fx(x2)}" y2="${fx(y2)}" stroke="var(--ter)" stroke-width="1"/>`;}
+  for(const [p,c,t] of [[0,'E','0°'],[90,'S','90°'],[180,'W','±180°'],[-90,'N','−90°']]){const [x,y]=at(p,RN+40);
+    s+=`<text x="${fx(x)}" y="${fx(y-2)}" text-anchor="middle" style="font-size:var(--lab)" fill="var(--ink)" font-weight="600">${c}</text><text x="${fx(x)}" y="${fx(y+16*K*0.85)}" text-anchor="middle" style="font-size:calc(var(--lab)*.8)" fill="var(--sec)">${t}</text>`;}
+  for(let p=-150;p<=150;p+=30){if(p%90===0)continue;const [x,y]=at(p,RN+22);s+=`<text x="${fx(x)}" y="${fx(y+4)}" text-anchor="middle" style="font-size:calc(var(--lab)*.75)" fill="var(--ter)">${p>0?p:'−'+(-p)}°</text>`;}
+  return s+`<circle r="${(4*K).toFixed(1)}" fill="var(--sel)"/><circle r="${(1.6*K).toFixed(1)}" fill="var(--card)" opacity=".7"/>`;}
+const cvar=i=>`var(--c${((i%NC)+NC)%NC})`;
+function svgScale(){const w=svg.clientWidth||600;K=820/w;svg.style.setProperty('--lab',Math.max(12,12.5*K*0.92).toFixed(1)+'px');}
+function renderNet(){if(!netCache)buildNet();svgScale();
+  let s=`<defs><clipPath id="clipOut"><circle r="${RN*1.36}"/></clipPath></defs><g id="netG">`;
+  s+=`<path d="${netCache.mi}" fill="none" stroke="var(--g-minor)" stroke-width="${(0.55*K).toFixed(2)}"/><path d="${netCache.ma}" fill="none" stroke="var(--g-major)" stroke-width="${(0.8*K).toFixed(2)}"/>`;
+  s+=`</g><g id="ov" clip-path="url(#clipOut)">${overlay()}</g><g id="ring">${ringSVG()}</g>`;svg.innerHTML=s;}
+function symElements(ops){const axes=[],mirrors=[];let inv=false;
+  const rotAx=R=>{const v=[R[2][1]-R[1][2],R[0][2]-R[2][0],R[1][0]-R[0][1]];if(vlen(v)>1e-6)return unit(v);const B=[0,1,2].map(j=>[R[0][j]+(j===0),R[1][j]+(j===1),R[2][j]+(j===2)]);B.sort((a,b)=>vlen(b)-vlen(a));return unit(B[0]);};
+  const addAx=(v,n,bar)=>{let e=axes.find(a=>Math.abs(dot(a.v,v))>0.9999);if(!e){e={v,n:1,bar:0};axes.push(e);}if(bar)e.bar=Math.max(e.bar,n);else e.n=Math.max(e.n,n);};
+  for(const R of ops){const det=M3.det(R),tr=R[0][0]+R[1][1]+R[2][2];
+    if(det>0){if(Math.abs(tr-3)<1e-6)continue;addAx(rotAx(R),Math.round(360/(Math.acos(clamp((tr-1)/2,-1,1))*R2D)),false);}
+    else{const M=M3.neg(R),t2=-tr;if(Math.abs(t2-3)<1e-6){inv=true;continue;}const ang=Math.acos(clamp((t2-1)/2,-1,1))*R2D;const ax=rotAx(M);
+      if(Math.abs(ang-180)<1e-3){if(!mirrors.some(m=>Math.abs(dot(m,ax))>0.9999))mirrors.push(ax);}else addAx(ax,Math.round(360/ang),true);}}
+  for(const a of axes){if(a.bar&&a.bar<=a.n)a.bar=0;if(inv&&a.n===3)a.bar=3;}return {axes:axes.filter(a=>a.n>1||a.bar),mirrors,inv};}
+function glyph(ax){const f='var(--sym)';const poly=(n,r)=>{let p='';for(let i=0;i<n;i++){const a=i/n*2*Math.PI-Math.PI/2;p+=(i?'L':'M')+fx(Math.cos(a)*r)+' '+fx(Math.sin(a)*r);}return p+'Z';};
+  if(ax.bar===4)return `<path d="${poly(4,10)}" fill="${f}" transform="rotate(45)"/><ellipse rx="3" ry="6" fill="var(--card)"/>`;
+  if(ax.bar===3)return `<path d="${poly(3,10)}" fill="${f}"/><circle r="2.6" fill="var(--card)"/>`;
+  if(ax.bar===6)return `<path d="${poly(6,10.5)}" fill="none" stroke="${f}" stroke-width="2"/><path d="${poly(3,7)}" fill="${f}"/>`;
+  return {2:`<ellipse rx="5" ry="10" fill="${f}"/>`,3:`<path d="${poly(3,10)}" fill="${f}"/>`,4:`<path d="${poly(4,10)}" fill="${f}" transform="rotate(45)"/>`,6:`<path d="${poly(6,10)}" fill="${f}"/>`}[ax.n]||'';}
+function symSVG(){if(!S.showSym)return '';const el=symElements(groupOps(S.pg));let s='';const sw=1.6*K;
+  for(const m of el.mirrors){if(Math.abs(m[2])>0.9999)s+=`<circle r="${RN}" fill="none" stroke="var(--sym)" stroke-width="${sw*1.5}"/>`;else s+=`<path d="${curvePaths(circlePts(m,90,180),true).solid}" fill="none" stroke="var(--sym)" stroke-width="${sw}"/>`;}
+  for(const ax of el.axes){for(const e of (Math.abs(ax.v[2])<1e-6?[ax.v,neg(ax.v)]:[upper(ax.v)])){const [X,Y]=P(e);s+=`<g transform="translate(${fx(X)} ${fx(Y)}) rotate(${fx(Math.atan2(Y,X)*R2D+90)}) scale(${(K*0.75).toFixed(2)})">${glyph(ax)}</g>`;}}
+  return s;}
+function txt(x,y,body,col,size,w=600){return `<text x="${fx(x)}" y="${fx(y)}" fill="${col}" style="font-size:${size}" font-weight="${w}" paint-order="stroke" stroke="var(--card)" stroke-width="${(3.5*K*0.8).toFixed(1)}" stroke-linejoin="round" pointer-events="none">${body}</text>`;}
+function overlay(){const k=K*0.8;let s=symSVG();const sel=new Set(S.sel);
+  for(const it of S.items){if(!it.visible)continue;const col=cvar(it.color),on=sel.has(it.id);
+    if(it.kind==='gc'){const c=curvePaths(circlePts(it.v,90,240),true);
+      s+=`<path d="${c.solid}" fill="none" stroke="${col}" stroke-width="${(on?3:1.8)*k}" ${it.dash?`stroke-dasharray="${7*k} ${5*k}"`:''}/>`;
+      if(on)s+=`<path d="${c.solid}" fill="none" stroke="var(--sel)" stroke-width="${k}" stroke-dasharray="${3*k} ${3*k}"/>`;
+      s+=`<path d="${c.solid}" fill="none" stroke="transparent" stroke-width="${14*k}" data-id="${it.id}" style="cursor:pointer"/>`;
+      if(it.label){const q=P(dipPoint(it.v));s+=txt(q[0]+6*k,q[1]+16*k,esc(it.label),col,'calc(var(--lab)*.85)',500);}}
+    else if(it.kind==='sc'){const c=curvePaths(circlePts(it.v,it.r,360),true,true);
+      s+=`<path d="${c.solid}" fill="none" stroke="${col}" stroke-width="${(on?3:1.8)*k}"/>`;if(c.outer)s+=`<path d="${c.outer}" fill="none" stroke="${col}" stroke-width="${1.5*k}" opacity=".5"/>`;
+      if(on)s+=`<path d="${c.solid}" fill="none" stroke="var(--sel)" stroke-width="${k}" stroke-dasharray="${3*k} ${3*k}"/>`;
+      s+=`<path d="${c.solid}${c.outer}" fill="none" stroke="transparent" stroke-width="${14*k}" data-id="${it.id}" style="cursor:pointer"/>`;
+      if(it.showCenter){const cc=scCenter(it.v,it.r);if(cc)s+=`<path d="M${fx(cc[0]-6*k)} ${fx(cc[1])}h${fx(12*k)}M${fx(cc[0])} ${fx(cc[1]-6*k)}v${fx(12*k)}" stroke="${col}" stroke-width="${1.4*k}"/>`;}}
+    else if(it.kind==='arc'){const tot=angDeg(it.a,it.b),n=Math.max(8,Math.ceil(tot)),pts=[];for(let i=0;i<=n;i++)pts.push(slerp(it.a,it.b,i/n));const c=curvePaths(pts,false);
+      s+=`<path d="${c.solid}${c.low}" fill="none" stroke="${col}" stroke-width="${3.2*k}" stroke-linecap="round" opacity=".8"/>`;
+      for(let d=2;d<tot-0.5;d+=2){const A=P(slerp(it.a,it.b,d/tot)),B=P(slerp(it.a,it.b,Math.min(1,(d+0.5)/tot)));if(A[2])continue;const tx=B[0]-A[0],ty=B[1]-A[1],tl=Math.hypot(tx,ty)||1,L=(d%10===0?8:4.5)*k;
+        s+=`<line x1="${fx(A[0]-ty/tl*L)}" y1="${fx(A[1]+tx/tl*L)}" x2="${fx(A[0]+ty/tl*L)}" y2="${fx(A[1]-tx/tl*L)}" stroke="${col}" stroke-width="${k}"/>`;}
+      if(it.label){const m=P(slerp(it.a,it.b,0.5));s+=txt(m[0]+8*k,m[1]-8*k,esc(it.label),col,'var(--lab)',700);}}
+    else if(it.kind==='path'){const c=curvePaths(it.pts,false);s+=`<path d="${c.solid}${c.low}" fill="none" stroke="${col}" stroke-width="${1.3*k}" stroke-dasharray="${2*k} ${3.5*k}"/>`;
+      const e=P(it.pts[it.pts.length-1]),e0=P(it.pts[it.pts.length-2]);s+=`<path d="M0 0 l${-9*k} ${-4.5*k} v${9*k}z" fill="${col}" transform="translate(${fx(e[0])} ${fx(e[1])}) rotate(${fx(Math.atan2(e[1]-e0[1],e[0]-e0[0])*R2D)})"/>`;}}
+  const pts=S.items.filter(i=>i.kind==='pt'&&i.visible);
+  for(const it of pts){const [X,Y,low]=P(it.v),col=cvar(it.color),r=(it.form?3.6:4.8)*k;
+    if(sel.has(it.id))s+=`<circle cx="${fx(X)}" cy="${fx(Y)}" r="${r+5*k}" fill="none" stroke="var(--sel)" stroke-width="${2*k}"/>`;
+    s+=it.dir?`<path d="M${fx(X-r)} ${fx(Y-r)}L${fx(X+r)} ${fx(Y+r)}M${fx(X-r)} ${fx(Y+r)}L${fx(X+r)} ${fx(Y-r)}" stroke="${col}" stroke-width="${2*k}"/>`
+      :`<circle cx="${fx(X)}" cy="${fx(Y)}" r="${r}" fill="${low?'var(--card)':col}" stroke="${col}" stroke-width="${1.6*k}"/>`;
+    s+=`<circle cx="${fx(X)}" cy="${fx(Y)}" r="${12*k}" fill="transparent" data-id="${it.id}" style="cursor:pointer"/>`;}
+  for(const it of pts){const n=nameSVG(it);if(!n)continue;const [X,Y]=P(it.v);s+=txt(X+7*k,Y-7*k,n,cvar(it.color),it.form?'calc(var(--lab)*.82)':'var(--lab)',it.form?500:700);}
+  return s;}
+function renderOverlay(){const g=document.getElementById('ov');if(!g)return renderNet();svgScale();g.innerHTML=overlay();document.getElementById('ring').innerHTML=ringSVG();}
+
+/* ---------- 2D 互動 ---------- */
+let hover='';
+function svgPt(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const m=svg.getScreenCTM();if(!m)return [0,0];const q=p.matrixTransform(m.inverse());return [q.x,q.y];}
+svg.addEventListener('pointermove',e=>{const [X,Y]=svgPt(e);if(Math.hypot(X,Y)<=RN){const {phi,rho}=toPR(invP(X,Y));hover=`Φ <b class="num">${f1(phi)}</b>　ρ <b class="num">${f1(rho)}</b>`;}else hover='';renderStatus();});
+svg.addEventListener('pointerleave',()=>{hover='';renderStatus();});
+svg.addEventListener('click',e=>{const t=e.target.closest('[data-id]');if(t)return toggleSel(+t.dataset.id);
+  if(S.clickAdd){const [X,Y]=svgPt(e);if(Math.hypot(X,Y)<=RN){snap();const it=addPoint(invP(X,Y));log(`<b>${esc(it.label)}</b> ${fPR(it.v)}`);S.sel=[it.id];renderAll();}}
+  else if(S.sel.length){S.sel=[];renderAll();}});
+function toggleSel(id){const i=S.sel.indexOf(id);if(i>=0)S.sel.splice(i,1);else S.sel.push(id);renderAll();}
+const KIND={gc:'大圓',sc:'小圓'};
+function renderStatus(){const its=S.sel.map(byId).filter(Boolean);
+  document.getElementById('status').innerHTML=(hover?`<span>${hover}</span>`:'')+its.map(it=>`<span class="chip"><i style="background:${cvar(it.color)}"></i>${it.kind==='pt'?nameHTML(it):(KIND[it.kind]||'')+' '+esc(it.label||'')}</span>`).join('');}
+
+/* ---------- 動畫與網的轉動 ---------- */
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;let animToken=0;
+function animate(ms,fn){return new Promise(res=>{if(reduceMotion||ms<=0){fn(1);res();return;}const my=++animToken,t0=performance.now();
+  const tick=now=>{if(my!==animToken){fn(1);res();return;}const t=clamp((now-t0)/ms,0,1);fn(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);if(t<1)requestAnimationFrame(tick);else res();};requestAnimationFrame(tick);});}
+const rotTxt=d=>Math.abs(d)<0.05?'0°':`${f1(Math.abs(d))} ${d>0?'逆時針':'順時針'}`;
+function syncRot(){document.getElementById('netRot').value=S.netRot;document.getElementById('netRotVal').textContent=rotTxt(S.netRot);}
+async function setNetRot(target,anim){target=normPhi(target);if(!anim){S.netRot=target;syncRot();renderOverlay();renderStatus();return;}
+  const from=S.netRot,d=normPhi(target-from);await animate(Math.min(1400,300+Math.abs(d)*8),t=>{S.netRot=from+d*t;syncRot();renderOverlay();renderStatus();});S.netRot=target;syncRot();renderOverlay();}
+const netN=()=>fromPR(-90+S.netRot,90);
+function alignGC(p){let t=normPhi(toPR(unit(cross(p,[0,0,1]))).phi+90);if(t>90)t-=180;if(t<=-90)t+=180;return t;}
+const alignPt=v=>normPhi(toPR(v).phi);
+
+/* ---------- 作圖 ---------- */
+function scIntersect(a,ra,b,rb){a=unit(a);b=unit(b);const ca=Math.cos(ra*D2R),cb=Math.cos(rb*D2R),g=dot(a,b);if(Math.abs(1-g*g)<1e-12)return [];
+  const x=(ca-cb*g)/(1-g*g),y=(cb-ca*g)/(1-g*g),v=add(mul(a,x),mul(b,y)),n=cross(a,b),t2=(1-dot(v,v))/dot(n,n);if(t2<-1e-9)return [];
+  const t=Math.sqrt(Math.max(0,t2));return t<1e-9?[unit(v)]:[unit(add(v,mul(n,t))),unit(sub(v,mul(n,t)))];}
+function selK(){const its=S.sel.map(byId).filter(Boolean);return {its,pts:its.filter(i=>i.kind==='pt'),gcs:its.filter(i=>i.kind==='gc'),scs:its.filter(i=>i.kind==='sc')};}
+const need=w=>log(`<span class="muted">請先選取${w}。</span>`);
+const ACT={
+  gc2(){const {pts}=selK();if(pts.length<2)return need('2 點');const [A,B]=pts;const p=cross(A.v,B.v);if(vlen(p)<1e-9)return;snap();const g=addGC(p,`${A.label||''}${B.label||''}`,{color:A.color});
+    log(`大圓 ${esc(g.label)}　描圖紙轉 <b>${rotTxt(alignGC(g.v))}</b> 可對齊經線`);S.sel=[g.id];renderAll();},
+  angle(){const {pts}=selK();if(pts.length<2)return need('2 點');const [A,B]=pts;snap();const a=angDeg(A.v,B.v);addArc(A.v,B.v,f1(a),{color:A.color});log(`∠${esc(A.label||'')}${esc(B.label||'')} = <b>${f1(a)}</b>（${fmtDM(a)}）`);renderAll();},
+  zone(){const {pts}=selK();if(pts.length<2)return need('2 點');const [A,B]=pts;const p=cross(A.v,B.v);if(vlen(p)<1e-9)return;snap();const z=upper(unit(p));addGC(z,'',{color:A.color});
+    const m=addPoint(z,autoLabel('M'),{color:A.color});if(A.hkl&&B.hkl&&!A.dir&&!B.dir){const u=integerize(cross(A.hkl,B.hkl));if(u){m.hkl=dot(unit(dvec(S.B,u)),z)<0?u.map(x=>-x+0):u;m.dir=true;}}
+    log(`晶帶軸 <b>${nameHTML(m)}</b> ${fPR(z)}`);S.sel=[m.id];renderAll();},
+  gcOfPole(){const {pts}=selK();if(!pts.length)return need('1 點');snap();for(const A of pts){addGC(A.v,'面 '+(A.label||''),{color:A.color});log(`${nameHTML(A)} 的大圓（差 90°）`);}renderAll();},
+  sc(){const {pts}=selK();if(!pts.length)return need('1 點');const r=parseAng(document.getElementById('scR').value);if(!(r>0&&r<180))return;snap();
+    for(const A of pts){addSC(A.v,r,'',{color:A.color});log(`以 ${nameHTML(A)} 為中心、半徑 ${f1(r)} 的小圓`);}renderAll();},
+  x(){const {gcs,scs}=selK();let xs=[];let col=0;
+    if(scs.length>=2){xs=scIntersect(scs[0].v,scs[0].r,scs[1].v,scs[1].r);col=scs[0].color;}
+    else if(scs.length&&gcs.length){xs=scIntersect(scs[0].v,scs[0].r,gcs[0].v,90);col=scs[0].color;}
+    else if(gcs.length>=2){const c=cross(gcs[0].v,gcs[1].v);if(vlen(c)>1e-9)xs=[upper(unit(c))];col=gcs[0].color;}
+    else return need('2 個圓（大圓或小圓）');
+    if(!xs.length)return log('沒有交點。');snap();const ids=xs.map(v=>{const p=addPoint(v,autoLabel('C'),{color:col});log(`交點 <b>${esc(p.label)}</b> ${fPR(v)}`);return p.id;});S.sel=ids;renderAll();},
+  anti(){const {pts}=selK();if(!pts.length)return need('1 點');snap();for(const A of pts){const p=addPoint(neg(A.v),(A.label||'P')+'′',{color:A.color});log(`${nameHTML(A)} 的 Antipole ${fPR(p.v)}`);}renderAll();},
+  async rotate(){const {pts}=selK();const d=parseAng(document.getElementById('rotDeg').value);if(!pts.length||!isFinite(d))return need('點');snap();await rotatePoints(pts,netN(),d,true,true);},
+  async toPrim(){const {pts}=selK();if(pts.length<2)return need('2 點');snap();await toPrimitive(pts[0],pts[1],true);}
+};
+async function rotatePoints(movers,axis,deg,copy,anim,alive=()=>{}){
+  const tg=movers.map(m=>copy?addPoint(m.v,(m.label||'P')+'′',{color:m.color}):m),st=movers.map(m=>m.v.slice()),paths=movers.map((m,i)=>addPath([st[i],st[i]],{color:m.color}));
+  const step=t=>{tg.forEach((g,i)=>{g.v=unit(rodr(st[i],axis,deg*t));const n=Math.max(2,Math.ceil(Math.abs(deg*t)/2)),pp=[];for(let j=0;j<=n;j++)pp.push(unit(rodr(st[i],axis,deg*t*j/n)));paths[i].pts=pp;});renderOverlay();};
+  if(anim)await animate(Math.min(2200,500+Math.abs(deg)*14),step);alive();step(1);
+  tg.forEach((g,i)=>log(`${esc(movers[i].label||'')} → <b>${esc(g.label)}</b> ${fPR(g.v)}`));renderAll();return tg;}
+async function toPrimitive(A,B,anim,alive=()=>{}){const p=upper(unit(cross(A.v,B.v)));await setNetRot(alignGC(p),anim);alive();
+  const r=await rotatePoints([A,B],unit(cross(p,[0,0,1])),toPR(p).rho,true,anim,alive);log(`∠${esc(r[0].label)}${esc(r[1].label)} = <b>${f1(angDeg(r[0].v,r[1].v))}</b>（不變）`);return r;}
+
+/* ---------- 晶面、晶形 ---------- */
+const faceVec=h=>unit(gvec(S.B,h));
+const addFace=(h,label,o={})=>addPoint(faceVec(h),label??'',{hkl:h,...o});
+function formFaces(h){const g=gvec(S.B,h),out=[];for(const R of groupOps(S.pg)){const g2=M3.vec(R,g);const idx=[dot(g2,S.B.a),dot(g2,S.B.b),dot(g2,S.B.c)].map(x=>Math.round(x)+0);if(!out.some(o=>o.idx.every((x,i)=>x===idx[i])))out.push({idx,v:unit(g2)});}return out;}
+function addForm(h,o={}){const id='F'+(S.nextId++),faces=formFaces(h),color=o.color??nextColor();S.forms.push({id,hkl:h,color,dist:o.dist??1,name:formName(h,faces.map(x=>x.v)),n:faces.length});
+  for(const f of faces)addPoint(f.v,'',{hkl:f.idx,form:id,color});return S.forms[S.forms.length-1];}
+function refreshFaces(){for(const it of S.items)if(it.kind==='pt'&&it.hkl)it.v=it.dir?unit(dvec(S.B,it.hkl)):faceVec(it.hkl);
+  for(const f of S.forms){const faces=formFaces(f.hkl);f.n=faces.length;f.name=formName(f.hkl,faces.map(x=>x.v));const mine=S.items.filter(i=>i.form===f.id),keep=new Set();
+    for(const fc of faces){const ex=mine.find(m=>m.hkl.every((x,i)=>x===fc.idx[i]));if(ex){ex.v=fc.v;keep.add(ex.id);}else keep.add(addPoint(fc.v,'',{hkl:fc.idx,form:f.id,color:f.color}).id);}
+    S.items=S.items.filter(i=>i.form!==f.id||keep.has(i.id));}}
+function formName(h,vs){const n=vs.length,pg=S.pg;
+  if(S.sys==='cubic'){const [a,b,c]=h.map(Math.abs).sort((x,y)=>y-x),half=pg==='-43m'||pg==='23';if(b===0&&c===0)return '立方體';if(a===b&&b===c)return half?'四面體':'八面體';if(c===0&&a===b)return '十二面體';
+    if(pg==='m-3m'){if(c===0)return '四六面體';if(a===b)return '三八面體';if(b===c)return '偏方面體';return '六八面體';}if(c===0&&(pg==='m-3'||pg==='23'))return '五角十二面體';return '';}
+  if(n===1)return '單面';if(n===2)return Math.abs(dot(vs[0],vs[1])+1)<1e-6?'平行雙面':'坡面／楔面';
+  let ax=null;for(let i=1;i<n&&!ax;i++){const c=cross(vs[0],vs[i]);if(vlen(c)>1e-6)ax=unit(c);}if(ax&&vs.every(v=>Math.abs(dot(v,ax))<1e-6))return '柱';
+  const sm=vs.reduce((a,b)=>add(a,b),[0,0,0]);if(vlen(sm)>1e-6&&vs.every(v=>dot(v,unit(sm))>1e-6))return '錐';
+  if(n>=6&&vs.every(v=>vs.some(w=>Math.abs(w[0]-v[0])<1e-6&&Math.abs(w[1]-v[1])<1e-6&&Math.abs(w[2]+v[2])<1e-6)))return '雙錐';
+  if(n===6&&SYS[S.sys].hex)return '菱面體';return '';}
+function findZones(){const F=S.items.filter(i=>i.kind==='pt'&&i.visible&&!i.dir),zs=[];
+  for(let i=0;i<F.length;i++)for(let j=i+1;j<F.length;j++){const c=cross(F[i].v,F[j].v);if(vlen(c)<1e-6)continue;const ax=upper(unit(c));if(zs.some(z=>Math.abs(dot(z.ax,ax))>1-1e-9))continue;
+    const mem=F.filter(f=>Math.abs(dot(f.v,ax))<1e-6);if(mem.length>=3)zs.push({ax,mem,uvw:integerize([dot(ax,S.B.as),dot(ax,S.B.bs),dot(ax,S.B.cs)])});}
+  return zs.sort((a,b)=>b.mem.length-a.mem.length);}
+
+/* ---------- 3D ---------- */
+function polyhedron(planes){const maxd=Math.max(...planes.map(p=>p.d)),B=maxd*2.6,all=planes.slice();for(const n of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])all.push({n,d:B,virt:true});
+  const verts=[],N=all.length;for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){const cij=cross(all[i].n,all[j].n);if(vlen(cij)<1e-9)continue;for(let k=j+1;k<N;k++){const det=dot(all[k].n,cij);if(Math.abs(det)<1e-9)continue;
+    const v=mul(add(add(mul(cross(all[j].n,all[k].n),all[i].d),mul(cross(all[k].n,all[i].n),all[j].d)),mul(cij,all[k].d)),1/det);if(all.every(p=>dot(p.n,v)<=p.d+1e-7)&&!verts.some(w=>vlen(sub(w,v))<1e-6))verts.push(v);}}
+  let open=false;const faces=[];for(const p of all){const vs=verts.filter(v=>Math.abs(dot(p.n,v)-p.d)<1e-6);if(vs.length<3)continue;if(p.virt)open=true;
+    const c=mul(vs.reduce((a,b)=>add(a,b),[0,0,0]),1/vs.length),u=unit(sub(vs[0],c)),w=cross(p.n,u);vs.sort((a,b)=>Math.atan2(dot(sub(a,c),w),dot(sub(a,c),u))-Math.atan2(dot(sub(b,c),w),dot(sub(b,c),u)));faces.push({n:p.n,vs,src:p.src,virt:!!p.virt});}
+  return {faces,open,verts};}
+const V3={yaw:-32,pitch:20,o:{crystal:true,rays:true}};const cv3=document.getElementById('cv3');let css={},crystalCache=null;
+function readColors(){const cs=getComputedStyle(document.documentElement);css={};for(const k of ['ink','sec','ter','card','blue'])css[k]=cs.getPropertyValue('--'+k).trim();for(let i=0;i<NC;i++)css['c'+i]=cs.getPropertyValue('--c'+i).trim();}
+function rgb(h){h=h.replace('#','');const n=parseInt(h,16);return [(n>>16)&255,(n>>8)&255,n&255];}
+const rgba=(h,a)=>{const [r,g,b]=rgb(h);return `rgba(${r},${g},${b},${a})`;},shade=(h,f)=>{const m=x=>Math.round(clamp(x*f,0,255));const [r,g,b]=rgb(h);return `rgb(${m(r)},${m(g)},${m(b)})`;};
+function crystalModel(){const F=S.items.filter(i=>i.kind==='pt'&&i.visible&&i.hkl&&!i.dir);if(F.length<3)return null;
+  const key=F.map(f=>f.id+':'+f.v.map(x=>x.toFixed(5)).join(',')+':'+((S.forms.find(m=>m.id===f.form)||{}).dist||1)).join('|');if(crystalCache&&crystalCache.key===key)return crystalCache.m;
+  const pl=[];for(const f of F){if(pl.some(p=>dot(p.n,f.v)>1-1e-9))continue;const fm=S.forms.find(x=>x.id===f.form);pl.push({n:f.v,d:fm?fm.dist:1,src:f});}
+  const m=polyhedron(pl);let R=0;for(const v of m.verts)if(!m.open||pl.some(p=>Math.abs(dot(p.n,v)-p.d)<1e-6))R=Math.max(R,vlen(v));m.scale=R>0?0.46/R:1;crystalCache={key,m};return m;}
+function render3D(){if(S.view!=='3d')return;readColors();const dpr=devicePixelRatio||1,W=cv3.clientWidth,H=cv3.clientHeight;if(!W)return;
+  if(cv3.width!==Math.round(W*dpr)||cv3.height!==Math.round(H*dpr)){cv3.width=Math.round(W*dpr);cv3.height=Math.round(H*dpr);}
+  const g=cv3.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  const s=Math.min(W,H)*0.4,cx=W/2,cy=H/2,cyw=Math.cos(V3.yaw*D2R),syw=Math.sin(V3.yaw*D2R),cp=Math.cos(V3.pitch*D2R),sp=Math.sin(V3.pitch*D2R);
+  const cam=v=>{const d=v[0]*cyw-v[1]*syw,r=v[0]*syw+v[1]*cyw,u=v[2];return [d*cp+u*sp,r,-d*sp+u*cp];},scr=c=>[cx+s*c[1],cy-s*c[2]],prims=[];
+  const seg=(a,b,col,w,ab,dash)=>{const ca=cam(a),cb=cam(b),dz=(ca[0]+cb[0])/2;prims.push({z:dz,f:()=>{const A=scr(ca),B=scr(cb);g.globalAlpha=dz<0?ab:1;g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke();g.setLineDash([]);g.globalAlpha=1;}});};
+  const curve=(pts,col,w,ab,dash,closed)=>{for(let i=0;i<pts.length-(closed?0:1);i++)seg(pts[i],pts[(i+1)%pts.length],col,w,ab,dash);};
+  const dotp=(v,col,r,hollow,lab)=>{const c=cam(v);prims.push({z:c[0]+0.001,f:()=>{const A=scr(c);g.globalAlpha=c[0]<-0.02?0.45:1;g.beginPath();g.arc(A[0],A[1],r,0,7);
+    if(hollow){g.fillStyle=css.card;g.fill();g.strokeStyle=col;g.lineWidth=1.6;g.stroke();}else{g.fillStyle=col;g.fill();}
+    if(lab){g.font='600 12px -apple-system,"PingFang TC","Noto Sans TC",sans-serif';g.lineWidth=3;g.strokeStyle=css.card;g.strokeText(lab,A[0]+6,A[1]-6);g.fillStyle=col;g.fillText(lab,A[0]+6,A[1]-6);}g.globalAlpha=1;}});};
+  for(let ph=0;ph<180;ph+=30)curve(circlePts(fromPR(ph,90),90,72),rgba(css.ter,0.6),0.8,0.25,null,true);
+  for(let r=30;r<180;r+=30){const pts=[];for(let p=0;p<360;p+=5)pts.push(fromPR(p,r));curve(pts,rgba(css.ter,0.6),0.8,0.25,null,true);}
+  for(let i=0;i<48;i++){const ca=cam(fromPR(i/48*360,90)),cb=cam(fromPR((i+1)/48*360,90)),c0=cam([0,0,0]);prims.push({z:(ca[0]+cb[0])/3-0.02,f:()=>{const A=scr(ca),B=scr(cb),O=scr(c0);g.fillStyle=rgba(css.sec,0.12);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.closePath();g.fill();}});}
+  curve(circlePts([0,0,1],90,96),css.sec,1.1,0.4,null,true);
+  for(const [v,l] of [[S.B.a,S.lat.hex?'a₁':'a'],[S.B.b,S.lat.hex?'a₂':'b'],[S.B.c,'c']]){const u=unit(v);seg(mul(u,-1.18),mul(u,1.18),css.ter,1,0.35,[2,3]);dotp(mul(u,1.22),css.sec,0.1,false,l);}
+  dotp([0,0,-1],css.ink,3,false,'S');
+  const cm=V3.o.crystal?crystalModel():null;
+  if(cm){const L=unit([0.7,-0.35,0.62]);for(const f of cm.faces){const nc=cam(f.n);if(nc[0]<=1e-6)continue;const pts=f.vs.map(v=>cam(mul(v,cm.scale))),z=pts.reduce((a,b)=>a+b[0],0)/pts.length;
+    const lit=0.62+0.45*Math.max(0,dot(nc,L)),base=f.virt?css.ter:css['c'+((f.src?f.src.color:0)%NC)];
+    prims.push({z:z+0.3,f:()=>{g.beginPath();pts.forEach((p,i)=>{const A=scr(p);i?g.lineTo(A[0],A[1]):g.moveTo(A[0],A[1]);});g.closePath();g.fillStyle=shade(base,lit*0.55+0.35);g.globalAlpha=f.virt?0.25:0.94;g.fill();g.globalAlpha=1;g.strokeStyle=rgba(css.ink,0.45);g.lineWidth=1;g.stroke();}});}}
+  for(const it of S.items){if(!it.visible)continue;const col=css['c'+(it.color%NC)];
+    if(it.kind==='gc'){const pts=circlePts(it.v,90,96);curve(pts,col,2,0.35,null,true);for(let i=0;i<32;i++){const ca=cam(pts[i*3]),cb=cam(pts[((i+1)*3)%96]),c0=cam([0,0,0]);prims.push({z:(ca[0]+cb[0])/3,f:()=>{const A=scr(ca),B=scr(cb),O=scr(c0);g.fillStyle=rgba(col,0.1);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.closePath();g.fill();}});}}
+    else if(it.kind==='sc')curve(circlePts(it.v,it.r,96),col,2,0.35,null,true);
+    else if(it.kind==='arc'){const pts=[];for(let i=0;i<=24;i++)pts.push(slerp(it.a,it.b,i/24));curve(pts,col,3.2,0.4,null,false);}
+    else if(it.kind==='path')curve(it.pts,col,1.4,0.35,[2,3],false);}
+  const pts=S.items.filter(i=>i.kind==='pt'&&i.visible),many=pts.length>36;
+  for(const it of pts){const col=css['c'+(it.color%NC)],v=it.v;curve([[0,0,0],mul(v,0.33),mul(v,0.66),v],rgba(col,0.85),1.2,0.35,null,false);
+    if(V3.o.rays){const tg=v[2]>=0?[0,0,-1]:[0,0,1],ray=[];for(let i=0;i<=10;i++)ray.push(add(v,mul(sub(tg,v),i/10)));curve(ray,rgba(col,v[2]>=0?0.7:0.35),1,0.3,[4,3],false);
+      const k=v[2]>=0?1/(1+v[2]):1/(1-v[2]);dotp([v[0]*k,v[1]*k,0],css.ink,2.3,v[2]<0);}
+    dotp(v,col,it.form?3.4:4.4,v[2]<-1e-9,(many&&it.form)?'':namePlain(it));}
+  prims.sort((a,b)=>a.z-b.z);for(const p of prims)p.f();g.beginPath();g.arc(cx,cy,s,0,7);g.strokeStyle=css.ink;g.lineWidth=1.3;g.stroke();}
+(()=>{let d=null;cv3.addEventListener('pointerdown',e=>{d=[e.clientX,e.clientY];cv3.setPointerCapture(e.pointerId);});
+  cv3.addEventListener('pointermove',e=>{if(!d)return;V3.yaw-=(e.clientX-d[0])*0.45;V3.pitch=clamp(V3.pitch+(e.clientY-d[1])*0.45,-90,90);d=[e.clientX,e.clientY];render3D();});
+  const end=()=>{d=null;};cv3.addEventListener('pointerup',end);cv3.addEventListener('pointercancel',end);})();
+
+/* ---------- 軸長比（練習題內部使用） ---------- */
+function paramsToLat(sys,x){switch(sys){case 'tetragonal':return {a:1,b:1,c:Math.exp(x[0]),al:90,be:90,ga:90};case 'hexagonal':case 'trigonal':return {a:1,b:1,c:Math.exp(x[0]),al:90,be:90,ga:120};
+  case 'orthorhombic':return {a:Math.exp(x[0]),b:1,c:Math.exp(x[1]),al:90,be:90,ga:90};case 'monoclinic':return {a:Math.exp(x[0]),b:1,c:Math.exp(x[1]),al:90,be:x[2],ga:90};}return {a:1,b:1,c:1,al:90,be:90,ga:90};}
+function objective(sys,x,cons){const B=buildLat(paramsToLat(sys,x));let s=0;
+  for(const c of cons){if(c.type==='ang'){const d=angDeg(gvec(B,c.h1),gvec(B,c.h2))-c.val;s+=d*d;}else{const pr=toPR(gvec(B,c.h1));if(isFinite(c.phi)){const d=normPhi(pr.phi-c.phi);s+=d*d;}if(isFinite(c.rho)){const d=pr.rho-c.rho;s+=d*d;}}}
+  if(sys==='monoclinic'&&(x[2]<90||x[2]>150))s+=1e4;return s;}
+function nelderMead(f,x0,step,it=900){const n=x0.length;let P=[x0.slice()];for(let i=0;i<n;i++){const p=x0.slice();p[i]+=step[i];P.push(p);}let F=P.map(f);
+  for(let k=0;k<it;k++){const ix=P.map((_,i)=>i).sort((a,b)=>F[a]-F[b]);P=ix.map(i=>P[i]);F=ix.map(i=>F[i]);if(Math.abs(F[n]-F[0])<1e-14&&k>50)break;
+    const c=new Array(n).fill(0);for(let i=0;i<n;i++)for(let j=0;j<n;j++)c[j]+=P[i][j]/n;const xr=c.map((v,j)=>2*v-P[n][j]),fr=f(xr);
+    if(fr<F[0]){const xe=c.map((v,j)=>3*v-2*P[n][j]),fe=f(xe);if(fe<fr){P[n]=xe;F[n]=fe;}else{P[n]=xr;F[n]=fr;}}else if(fr<F[n-1]){P[n]=xr;F[n]=fr;}
+    else{const xc=c.map((v,j)=>(v+P[n][j])/2),fc=f(xc);if(fc<F[n]){P[n]=xc;F[n]=fc;}else for(let i=1;i<=n;i++){P[i]=P[i].map((v,j)=>(P[0][j]+v)/2);F[i]=f(P[i]);}}}
+  let b=0;for(let i=1;i<=n;i++)if(F[i]<F[b])b=i;return {x:P[b],f:F[b]};}
+function solve(sys,rows){const cons=rows.map(r=>r[0]==='ang'?{type:'ang',h1:to3(parseIdx(r[1])),h2:to3(parseIdx(r[2])),val:parseAng(r[3])}:{type:'co',h1:to3(parseIdx(r[1])),phi:parseAng(r[2]),rho:parseAng(r[3])});
+  const R=[-0.9,-0.3,0.3,0.9],st=[];if(sys==='orthorhombic')for(const a of R)for(const c of R)st.push([a,c]);else if(sys==='monoclinic')for(const a of R)for(const c of R)for(const b of [95,110,125])st.push([a,c,b]);else for(const a of [-1.5,-0.7,0,0.7,1.5])st.push([a]);
+  let best=null;for(const x0 of st){const sp=x0.map((_,i)=>i<2?0.25:4);let r=nelderMead(x=>objective(sys,x,cons),x0,sp);r=nelderMead(x=>objective(sys,x,cons),r.x,sp.map(v=>v/10));if(!best||r.f<best.f)best=r;}
+  return paramsToLat(sys,best.x);}
+const DATA={
+  ang:[['co','110','32.5','90'],['co','210','52','90'],['co','011','0','52'],['co','101','90','39.5'],['co','111','','57']],
+  t3:[['ang','001','101',"28°15'"],['ang','001','111',"37°13.5'"],['ang','111','-111',"50°39'"],['ang','001','331',"66°18'"]],
+  t4:[['co','211',"63°26'","62°57'"],['co','121',"26°34'","62°57'"]],
+  t5:[['ang','010','130',"22°08'"],['ang','101','-101',"74°38'"],['ang','001','111',"44°34'"]],
+  t6:[['co','10-10','90','90'],['co','11-20','60','90'],['co','10-11','90',"44°36'"],['co','01-12','30',"26°15'"]],
+  t7:[['ang','110','010',"59°24'"],['ang','110','001',"67°47'"],['ang','001','-101',"50°17'"]]
+};
+
+/* ---------- 練習題 ---------- */
+class Cancel{}
+const ex={cur:null,step:0,token:0};
+function ctx(anim,token){const alive=()=>{if(token!==ex.token)throw new Cancel();};
+  return {alive,
+    reset(sys='cubic',latp,pg){S.items=[];S.forms=[];S.sel=[];S.log=[];S.sys=sys;S.pg=pg||SYS[sys].pgs[SYS[sys].pgs.length-1];S.latp={...SYS[sys].def,...(latp||{})};setLat();S.netRot=0;S.showSym=false;colorCursor=0;crystalCache=null;},
+    pt:(l,p,r,o={})=>addPoint(fromPR(parseAng(p),parseAng(r)),l,o),
+    face:(h,l,o={})=>addFace(to3(parseIdx(h)),l??'',o),
+    form:(h,o={})=>addForm(to3(parseIdx(h)),o),
+    gc2:(a,b,l,o={})=>addGC(cross(a.v,b.v),l??'',{color:a.color,...o}),
+    gcP:(p,l,o={})=>addGC(p.v,l??'',{color:p.color,...o}),
+    sc:(p,r,o={})=>addSC(p.v,parseAng(r),'',{color:p.color,...o}),
+    scx:(a,b,ls,o={})=>scIntersect(a.v,a.r,b.v,b.r).map((v,i)=>addPoint(v,ls?ls[i]:autoLabel('C'),{color:a.color,...o})),
+    scgx:(a,g,o={})=>scIntersect(a.v,a.r,g.v,90).map(v=>addPoint(v,'',{color:a.color,...o})),
+    arc(a,b,o={}){const t=angDeg(a.v,b.v);addArc(a.v,b.v,o.label??f1(t),{color:o.color??a.color??1});return t;},
+    anti:(a,l)=>addPoint(neg(a.v),l??a.label+'′',{color:a.color}),
+    async net(d){alive();await setNetRot(d,anim);alive();},
+    async toPrim(A,B){alive();const r=await toPrimitive(A,B,anim,alive);alive();return r;},
+    view:v=>setView(v),sym(on){S.showSym=on;},sel(...its){S.sel=its.map(i=>i.id);},
+    keep(list,pick){list.filter(v=>v!==pick).forEach(v=>S.items.splice(S.items.indexOf(v),1));return pick;}};}
+const ANG=c=>{const P={};for(const [l,p,r] of [['c',0,0],['b',0,90],['n','32.5',90],['m',52,90],['o',0,52],['d',90,'39.5']])P[l]=c.pt(l,p,r,{color:0});return P;};
+const T1=c=>{c.reset();return [c.pt('A',21,42,{color:1}),c.pt('B',-35,76,{color:1})];};
+const CUB=c=>{c.reset();const a=c.pt('(100)',90,90,{color:0});c.pt('(010)',0,90,{color:0});const o=c.pt('(001)',0,0,{color:0});const m=c.pt('(110)',45,90,{color:0});return {a,o,m,z:c.gc2(o,m,'',{color:6,dash:true})};};
+const TET=c=>{c.reset('tetragonal');const o=c.pt('(001)',0,0,{color:0});const a=c.pt('(100)',90,90,{color:0});const m=c.pt('(110)',45,90,{color:0});c.gc2(o,m,'',{color:6,dash:true});return {o,a,m};};
+const EX=[
+ {id:'demo',group:'示範',title:'球面投影 → 赤平投影',given:'',steps:[
+   {t:'面極',n:'晶面的法線與球面的交點就是面極。',async run(c){c.reset();c.form('100');c.form('111',{dist:1.3});c.form('110',{dist:1.2});V3.o.rays=false;V3.yaw=-32;V3.pitch=20;c.view('3d');}},
+   {t:'連到南極',n:'北半球的面極連到南極，與赤道面的交點就是投影點，離圓心 R·tan(ρ/2)。',async run(c){c.reset();c.form('100');c.form('111',{dist:1.3});c.form('110',{dist:1.2});V3.o.rays=true;V3.yaw=-32;V3.pitch=20;c.view('3d');}},
+   {t:'赤平投影',n:'下半球的面畫成空心圓。',a:'立方體 6、八面體 8、十二面體 12，共 26 個面極',async run(c){c.reset();c.form('100');c.form('111');c.form('110');c.view('net');}}]},
+ {id:'ang',group:'講義練習',title:'鉛礬 PbSO₄',given:'c(—, 0°)　b(0°, 90°)　n(32½°, 90°)　m(52°, 90°)　o(0°, 52°)　d(90°, 39½°)　y(111)：ρ = 57°，b∧y = 45°',steps:[
+   {t:'標出各晶面',n:'先沿外圈找 Φ，再沿直徑數 ρ。',async run(c){c.reset('orthorhombic');ANG(c);c.view('net');}},
+   {t:'求 y(111) 的 Φ',n:'以 c 畫 57° 小圓、以 b 畫 45° 小圓，取交點。',a:'Φ = 32.5°',async run(c){c.reset('orthorhombic');const P=ANG(c);const s1=c.sc(P.c,57,{color:2}),s2=c.sc(P.b,45,{color:3});
+     const ys=c.scx(s1,s2,null,{color:1});const y=ys.find(v=>toPR(v.v).phi>0);y.label='y';ys.find(v=>v!==y).label='y′';c.view('net');}},
+   {t:'y 與 d(101) 的夾角',n:'轉描圖紙讓 y、d 落在網的同一條經線上，沿它數格子。',a:'45.0°',async run(c){c.reset('orthorhombic');const P=ANG(c);const y=addPoint(scIntersect(P.c.v,57,P.b.v,45).find(v=>toPR(v).phi>0),'y',{color:1});
+     c.view('net');const g=c.gc2(y,P.d,'',{color:1});await c.net(alignGC(g.v));c.arc(y,P.d);c.sel(y,P.d);}},
+   {t:'共有幾個面？',n:'依 2/m 2/m 2/m 對稱畫出每個晶形的全部晶面。',a:'28 個面',async run(c){const L=solve('orthorhombic',DATA.ang);c.reset('orthorhombic',L,'mmm');for(const h of ['001','010','110','210','011','101','111'])c.form(h);c.sym(true);c.view('net');}},
+   {t:'同晶帶的面',n:'同一大圓上的面屬於同一晶帶。',a:'[001]：b、n、m　[100]：c、o、b　[010]：c、d　[11̄0]：c、y、n',async run(c){const L=solve('orthorhombic',DATA.ang);c.reset('orthorhombic',L,'mmm');for(const h of ['001','010','110','210','011','101','111'])c.form(h);
+     const zs=findZones();for(const w of [[0,0,1],[1,0,0],[0,1,0],[1,-1,0]]){const z=zs.find(z=>z.uvw&&(z.uvw.join()===w.join()||z.uvw.join()===w.map(x=>-x+0).join()));if(z)addGC(z.ax,'',{color:6});}c.view('net');}}]},
+ {id:'t1',group:'Test',title:'Test 1',given:'A(21°, 42°)　B(−35°, 76°)　N(123°, 46°)',steps:[
+   {t:'過 A、B 畫大圓',n:'轉描圖紙讓 A、B 落在網的同一條經線上。',a:'描圖紙逆時針轉 43°',async run(c){const [A,B]=T1(c);c.view('net');await c.net(alignGC(cross(A.v,B.v)));c.gc2(A,B);c.sel(A,B);}},
+   {t:'∠AOB',n:'沿大圓從 A 數到 B，每小格 2°。',a:'57.1°',async run(c){const [A,B]=T1(c);c.view('net');await c.net(43);c.gc2(A,B);c.arc(A,B);}},
+   {t:'轉到基圓',n:'繞網的 N–S 軸轉 50.1°，兩點沿小圓移到基圓。',a:'∠A′OB′ = 57.1°，不變',async run(c){const [A,B]=T1(c);c.view('net');await c.net(43);c.gc2(A,B);await c.toPrim(A,B);}},
+   {t:'距 A 40° 的軌跡',n:'描圖紙逆時針轉 21°，讓 A 落在 E–W 直徑上；從 A 沿直徑往內外各數 40°，以兩端為直徑畫圓。',a:'投影後的圓心（＋）不在 A 上',async run(c){const [A,B]=T1(c);c.gc2(A,B);c.view('net');await c.net(21);c.sc(A,40,{color:2,showCenter:true});}},
+   {t:'求 C',n:'描圖紙順時針轉 125°，讓 B 落在 N–S 直徑上；以 B 畫 30° 小圓，取兩圓交點。',a:'C₁ (−37.7°, 46.1°)　C₂ (−4.1°, 76.2°)',async run(c){const [A,B]=T1(c);c.gc2(A,B);c.view('net');await c.net(-125);const s1=c.sc(A,40,{color:2}),s2=c.sc(B,30,{color:3});c.sel(...c.scx(s1,s2,['C1','C2'],{color:0}));}},
+   {t:'晶帶軸 M',n:'大圓 AB 的極，與大圓相差 90°。',a:'M (−137.0°, 50.1°)',async run(c){const [A,B]=T1(c);const g=c.gc2(A,B);c.view('net');await c.net(43);const M=addPoint(g.v,'M',{color:4});c.arc(M,{v:dipPoint(g.v)},{label:'90°',color:4});c.sel(M);}},
+   {t:'N 的大圓',n:'描圖紙逆時針轉 123°，沿 E–W 直徑往外數 46° 得 N，再過圓心數 90°。',async run(c){const [A,B]=T1(c);const g=c.gc2(A,B);addPoint(g.v,'M',{color:4});c.view('net');await c.net(123);const N=c.pt('N',123,46,{color:0});c.gcP(N,'面 N');c.sel(N);}},
+   {t:'M 與 N 的夾角',n:'兩大圓的夾角等於兩極 M、N 的夾角。',a:'69.5°（描圖紙順時針轉 10.5°）',async run(c){const [A,B]=T1(c);const g=c.gc2(A,B);const M=addPoint(g.v,'M',{color:4});const N=c.pt('N',123,46,{color:0});c.gcP(N,'面 N');c.view('net');
+     const g2=c.gc2(M,N,'',{color:4,dash:true});await c.net(alignGC(g2.v));c.arc(M,N,{color:4});c.sel(M,N);}},
+   {t:'A 的 Antipole',n:'描圖紙逆時針轉 21°，沿直徑過圓心數到同樣的 ρ，畫空心圓。',a:'(−159°, 42°)',async run(c){const [A,B]=T1(c);c.gc2(A,B);c.view('net');await c.net(21);const a=c.anti(A,'A′');c.sel(A,a);}}]},
+ {id:'t2',group:'Test',title:'Test 2　等軸晶系',given:'(211)∧(111) 19°28′　(221)∧(100) 48°11′　(211)∧(100) 35°10′　(111)∧(100) 54°44′　(221)∧(111) 15°47.5′',steps:[
+   {t:'(100)、(010)、(001)、(110)',n:'(001) 在圓心；a = b，所以 (110) 在 45° 線上。',async run(c){CUB(c);c.view('net');}},
+   {t:'(111)',n:'以 (100) 畫 54°44′ 小圓，與 45° 線相交。',a:'(45°, 54.7°)',async run(c){const {a,z}=CUB(c);const s=c.sc(a,"54°44'",{color:2});const x=c.scgx(s,z,{color:1});c.keep(x,x.find(v=>v.v[2]>0)).label='(111)';c.view('net');}},
+   {t:'(221)',n:'以 (100) 畫 48°11′、以 (111) 畫 15°47.5′ 小圓。',a:'(45°, 70.5°)',async run(c){const {a}=CUB(c);const p=c.pt('(111)',45,"54°44'",{color:1});const s=c.sc(a,"48°11'",{color:2}),s2=c.sc(p,"15°47.5'",{color:3});
+     addPoint(scIntersect(s.v,s.r,s2.v,s2.r).sort((u,v)=>Math.abs(toPR(u).phi-45)-Math.abs(toPR(v).phi-45))[0],'(221)',{color:1});c.view('net');}},
+   {t:'(211)',n:'兩小圓幾乎相切，因為 (211) 就在 (100)–(111) 晶帶上；改用該大圓與 19°28′ 小圓的交點。',a:'(63.4°, 65.9°)',async run(c){const {a}=CUB(c);const p=c.pt('(111)',45,"54°44'",{color:1});c.pt('(221)',45,70.53,{color:1});const s=c.sc(p,"19°28'",{color:2});c.sc(a,"35°10'",{color:3});
+     const z=c.gc2(a,p,'',{color:5,dash:true});const xs=c.scgx(s,z,{color:5}).sort((u,v)=>angDeg(u.v,a.v)-angDeg(v.v,a.v));c.keep(xs,xs[0]).label='(211)';c.view('net');}},
+   {t:'(210)',n:'(001)、(211)、(210) 同一晶帶：過 (211) 的直徑與基圓的交點。',a:'(63.4°, 90°)',async run(c){const {o}=CUB(c);c.pt('(111)',45,"54°44'",{color:1});c.pt('(221)',45,70.53,{color:1});const p=c.pt('(211)',63.43,65.91,{color:5});
+     const g=c.gc2(o,p,'',{color:5,dash:true});const x=cross(g.v,[0,0,1]);addPoint(x[0]>0?x:neg(x),'(210)',{color:5});c.view('net');}}]},
+ {id:'t3',group:'Test',title:'Test 3　符山石（正方）',given:'(001)∧(101) 28°15′　(001)∧(111) 37°13.5′　(111)∧(1̄11) 50°39′　(001)∧(331) 66°18′',steps:[
+   {t:'(001)、(100)、(110)',n:'正方晶系 a = b，(110) 在 45° 線上。',async run(c){TET(c);c.view('net');}},
+   {t:'(111)、(101)',n:'以 (001) 畫 37°13.5′ 與 28°15′ 小圓，分別交 45° 線與 Φ = 90° 直徑。',a:'(111) (45°, 37.2°)　(101) (90°, 28.3°)',async run(c){const {o}=TET(c);c.sc(o,"37°13.5'",{color:2});c.sc(o,"28°15'",{color:3});c.pt('(111)',45,"37°13.5'",{color:1});c.pt('(101)',90,"28°15'",{color:1});c.view('net');}},
+   {t:'(331)、(1̄11)',n:'(331) 在 45° 線上 66°18′；(1̄11) 在 −45° 線上。',a:'(111)∧(1̄11) = 50°39′',async run(c){TET(c);const p=c.pt('(111)',45,"37°13.5'",{color:1});c.pt('(101)',90,"28°15'",{color:1});c.pt('(331)',45,"66°18'",{color:1});const q=c.pt('(1̄11)',-45,"37°13.5'",{color:5});c.arc(p,q,{color:5});c.view('net');}},
+   {t:'軸長比',n:'tan ρ(101) = c/a。',a:'a : c = 1 : 0.537',async run(c){const L=solve('tetragonal',DATA.t3);c.reset('tetragonal',L,'4/mmm');for(const h of ['001','100','110','111','101','331'])c.form(h);c.view('net');}}]},
+ {id:'t4',group:'Test',title:'Test 4　磷酸鹽礦物（正方）',given:'(001) (0°, 0°)　(211) (63°26′, 62°57′)　(121) (26°34′, 62°57′)',steps:[
+   {t:'標出三個面',async run(c){c.reset('tetragonal');c.pt('(001)',0,0,{color:0});c.pt('(211)',"63°26'","62°57'",{color:1});c.pt('(121)',"26°34'","62°57'",{color:1});c.view('net');}},
+   {t:'面角',n:'轉描圖紙讓 (211)、(121) 落在網的同一條經線上。',a:'(001)∧(211) = 62°57′　(211)∧(121) = 32.7°',async run(c){c.reset('tetragonal');c.pt('(001)',0,0,{color:0});const a=c.pt('(211)',"63°26'","62°57'",{color:1}),b=c.pt('(121)',"26°34'","62°57'",{color:1});c.view('net');const g=c.gc2(a,b,'',{color:1,dash:true});await c.net(alignGC(g.v));c.arc(a,b);}},
+   {t:'軸長比',n:'tan ρ(211) = (c/a)·√5。',a:'a : c = 1 : 0.876',async run(c){const L=solve('tetragonal',DATA.t4);c.reset('tetragonal',L,'4/mmm');const o=c.face('001','',{color:0});c.form('211',{color:1});const f=c.face('210','',{color:5});c.gc2(o,f,'',{color:5,dash:true});c.view('net');}}]},
+ {id:'t5',group:'Test',title:'Test 5　FeS₂（斜方）',given:'(010)∧(130) 22°08′　(101)∧(1̄01) 74°38′　(001)∧(111) 44°34′',steps:[
+   {t:'(130)：a/b',n:'tan 22°08′ = b/(3a)。',a:'a/b = 0.819',async run(c){c.reset('orthorhombic');const b=c.pt('(010)',0,90,{color:0});c.pt('(001)',0,0,{color:0});const p=c.pt('(130)',"22°08'",90,{color:1});c.arc(b,p);c.view('net');}},
+   {t:'(101)：c/a',n:'(101)、(1̄01) 各離 (001) 37°19′，tan 37°19′ = c/a。',a:'c/b = 0.625',async run(c){c.reset('orthorhombic');c.pt('(010)',0,90,{color:0});c.pt('(001)',0,0,{color:0});c.pt('(130)',"22°08'",90,{color:1});const p=c.pt('(101)',90,"37°19'",{color:1}),q=c.pt('(1̄01)',-90,"37°19'",{color:1});c.arc(p,q);c.view('net');}},
+   {t:'驗算並畫出全部晶面',n:'用算出的軸長比畫 (111)，量它與 (001) 的夾角。',a:'a : b : c = 0.819 : 1 : 0.625，共 20 面',async run(c){const L=solve('orthorhombic',DATA.t5);c.reset('orthorhombic',L,'mmm');for(const h of ['010','001','130','101','111'])c.form(h);
+     const o=S.items.find(i=>i.hkl&&i.hkl.join()==='0,0,1'),y=S.items.find(i=>i.hkl&&i.hkl.join()==='1,1,1');c.arc(o,y,{color:5});c.view('net');}}]},
+ {id:'t6',group:'Test',title:'Test 6　方解石（3̄ 2/m）',given:'(101̄0) (90°, 90°)　(112̄0) (60°, 90°)　(101̄1) (90°, 44°36′)　(011̄2) (30°, 26°15′)',steps:[
+   {t:'標出四個面',n:'六方軸：a₂ 在東（Φ = 0°），a₁ 在 Φ = 120°。',async run(c){c.reset('trigonal');c.pt('(101̄0)',90,90,{color:0});c.pt('(112̄0)',60,90,{color:0});c.pt('(101̄1)',90,"44°36'",{color:1});c.pt('(011̄2)',30,"26°15'",{color:2});c.view('net');}},
+   {t:'軸長比與全部晶面',n:'tan ρ(101̄1) = (c/a)·2/√3。',a:'a : c = 1 : 0.854，共 24 個面極',async run(c){const L=solve('trigonal',DATA.t6);c.reset('trigonal',L,'-3m');for(const h of ['10-10','11-20','10-11','01-12'])c.form(h);c.sym(true);c.view('net');}}]},
+ {id:'t7',group:'Test',title:'Test 7　正長石（單斜 2/m）',given:'(110)∧(010) 59°24′　(110)∧(001) 67°47′　(001)∧(1̄01) 50°17′',steps:[
+   {t:'(010)、(110)',n:'(110) 在基圓上，離 (010) 59°24′。',async run(c){c.reset('monoclinic');const b=c.pt('(010)',0,90,{color:0});const m=c.pt('(110)',"59°24'",90,{color:1});c.arc(b,m);c.view('net');}},
+   {t:'(001)：β',n:'以 (110) 畫 67°47′ 小圓，交 Φ = 90° 直徑；偏離圓心 β − 90°。',a:'β = 116°04′',async run(c){c.reset('monoclinic');const b=c.pt('(010)',0,90,{color:0});const m=c.pt('(110)',"59°24'",90,{color:1});const s=c.sc(m,"67°47'",{color:2});const g=c.gcP(b,'',{color:6,dash:true});
+     const xs=c.scgx(s,g,{color:0});c.keep(xs,xs.find(v=>v.v[2]>0)).label='(001)';c.view('net');}},
+   {t:'(1̄01)',n:'在圓心另一側，離 (001) 50°17′。',a:'(−90°, 24.2°)',async run(c){c.reset('monoclinic');c.pt('(010)',0,90,{color:0});c.pt('(110)',"59°24'",90,{color:1});const o=c.pt('(001)',90,26.07,{color:0});const q=addPoint(rodr(o.v,[0,1,0],-50.283),'(1̄01)',{color:5});c.arc(o,q,{color:5});c.view('net');}},
+   {t:'軸長比與全部晶面',n:'依 2/m 對稱畫出所有面。',a:'a : b : c = 0.658 : 1 : 0.555，共 10 面',async run(c){const L=solve('monoclinic',DATA.t7);c.reset('monoclinic',L,'2/m');for(const h of ['010','110','001','-101'])c.form(h);c.sym(true);c.view('net');}}]}
+];
+const exSel=document.getElementById('exSel');
+exSel.innerHTML=[...new Set(EX.map(e=>e.group))].map(g=>`<optgroup label="${g}">${EX.filter(e=>e.group===g).map(e=>`<option value="${e.id}">${esc(e.title)}</option>`).join('')}</optgroup>`).join('');
+exSel.addEventListener('change',()=>openEx(exSel.value,0));
+function openEx(id,k,anim=true){ex.cur=EX.find(e=>e.id===id);exSel.value=id;document.getElementById('exTitle').textContent=ex.cur.title;const gv=document.getElementById('exGiven');gv.textContent=ex.cur.given;gv.hidden=!ex.cur.given;goStep(k,anim);}
+async function goStep(k,anim){const e=ex.cur;k=clamp(k,0,e.steps.length-1);ex.step=k;const token=++ex.token;animToken++;const st=e.steps[k];
+  document.getElementById('exSteps').innerHTML=e.steps.map((s,i)=>`<li data-st="${i}" class="${i<k?'done':i===k?'cur':''}"><span class="n">${i<k?'✓':i+1}</span>${esc(s.t)}</li>`).join('');
+  const nt=document.getElementById('exNote');nt.textContent=st.n||'';nt.hidden=!st.n;
+  const a=document.getElementById('exAns');a.hidden=!st.a;a.innerHTML=st.a?`<b>答案</b>${esc(st.a)}`:'';
+  document.getElementById('exPrev').disabled=k===0;document.getElementById('exNext').disabled=k===e.steps.length-1;
+  try{snap();await st.run(ctx(anim,token));}catch(err){if(err instanceof Cancel)return;console.error(err);}
+  if(token!==ex.token)return;S.sel=S.sel.filter(id=>byId(id));syncCrystal();syncRot();sync3d();renderAll();}
+document.getElementById('exSteps').addEventListener('click',e=>{const li=e.target.closest('[data-st]');if(li)goStep(+li.dataset.st,true);});
+document.getElementById('exPrev').addEventListener('click',()=>goStep(ex.step-1,true));
+document.getElementById('exNext').addEventListener('click',()=>goStep(ex.step+1,true));
+
+/* ---------- 晶體面板 ---------- */
+const sysSel=document.getElementById('sysSel'),pgSel=document.getElementById('pgSel');
+sysSel.innerHTML=Object.entries(SYS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+const relB=()=>S.sys==='orthorhombic'||S.sys==='monoclinic'||S.sys==='triclinic';
+function syncCrystal(){sysSel.value=S.sys;pgSel.innerHTML=SYS[S.sys].pgs.map(p=>`<option value="${p}">${PGNAME[p]}</option>`).join('');pgSel.value=S.pg;
+  const f=SYS[S.sys].fields,el=document.getElementById('latInputs');el.hidden=!f.length;
+  el.innerHTML=f.map(k=>{const v=k==='a'?S.lat.a/S.lat.b:k==='c'?(relB()?S.lat.c/S.lat.b:S.lat.c/S.lat.a):S.lat[k];
+    const lab={a:'a/b',c:relB()?'c/b':'c/a',al:'α',be:'β',ga:'γ'}[k];
+    return `<span class="lab">${lab}</span><input class="in w-m" data-lat="${k}" value="${k.length===2?fmtDM(v):(+v.toFixed(4))}">`;}).join('');
+  renderForms();}
+function renderForms(){const fl=document.getElementById('formList');fl.innerHTML=S.forms.map(f=>`<div class="f"><span class="dot" style="background:${cvar(f.color)}"></span><span class="nm">${idxHTML(f.hkl,'{}')}<small>${esc(f.name)}${f.name?' · ':''}${f.n} 面</small></span><button class="x" data-fx="${f.id}" aria-label="移除">×</button></div>`).join('');
+  fl.hidden=!S.forms.length;const t=S.forms.reduce((a,f)=>a+f.n,0);document.getElementById('formTotal').textContent=S.forms.length?`共 ${t} 面`:'依點群畫出所有對稱等效面';
+  document.getElementById('symSw').checked=S.showSym;}
+sysSel.addEventListener('change',()=>{snap();S.sys=sysSel.value;S.pg=SYS[S.sys].pgs.at(-1);S.latp={...SYS[S.sys].def};setLat();refreshFaces();syncCrystal();renderAll();});
+pgSel.addEventListener('change',()=>{snap();S.pg=pgSel.value;refreshFaces();syncCrystal();renderAll();});
+document.getElementById('latInputs').addEventListener('change',e=>{const k=e.target.dataset.lat;if(!k)return;const v=k.length===2?parseAng(e.target.value):parseFloat(e.target.value);if(!(v>0))return syncCrystal();
+  snap();const L={...S.lat};if(k==='a')L.a=v*L.b;else if(k==='c')L.c=v*(relB()?L.b:L.a);else L[k]=v;S.latp=L;setLat();refreshFaces();syncCrystal();renderAll();});
+document.getElementById('formAdd').addEventListener('click',()=>{const h=to3(parseIdx(document.getElementById('formIn').value));if(!h)return;snap();addForm(h);syncCrystal();renderAll();});
+document.getElementById('formIn').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('formAdd').click();});
+document.getElementById('formList').addEventListener('click',e=>{const b=e.target.closest('[data-fx]');if(!b)return;snap();S.forms=S.forms.filter(f=>f.id!==b.dataset.fx);S.items=S.items.filter(i=>i.form!==b.dataset.fx);S.sel=S.sel.filter(x=>byId(x));syncCrystal();renderAll();});
+document.getElementById('symSw').addEventListener('change',e=>{S.showSym=e.target.checked;renderOverlay();});
+
+/* ---------- 作圖面板 ---------- */
+function renderResult(){document.getElementById('result').innerHTML=S.log.length?S.log.map(h=>`<div>${h}</div>`).join(''):'<div class="muted">在圖上點選點或線，再按作圖。</div>';}
+function renderTiles(){const {pts,gcs,scs}=selK();const ok={gc2:pts.length>=2,angle:pts.length>=2,zone:pts.length>=2,gcOfPole:pts.length>=1,sc:pts.length>=1,x:scs.length>=2||(scs.length&&gcs.length)||gcs.length>=2,anti:pts.length>=1,toPrim:pts.length>=2,rotate:pts.length>=1};
+  document.querySelectorAll('[data-act]').forEach(b=>b.disabled=!ok[b.dataset.act]);
+  document.getElementById('selHint').textContent=S.sel.length?`· 已選 ${S.sel.length} 個`:'· 先在圖上點選';}
+document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>ACT[b.dataset.act]()));
+document.getElementById('ptAdd').addEventListener('click',()=>{const p=parseAng(document.getElementById('ptPhi').value),r=parseAng(document.getElementById('ptRho').value);if(!isFinite(p)||!isFinite(r)||r<0||r>180)return;
+  snap();const it=addPoint(fromPR(p,r),document.getElementById('ptLab').value.trim()||undefined);log(`<b>${esc(it.label)}</b> ${fPR(it.v)}`);document.getElementById('ptLab').value='';renderAll();});
+['ptLab','ptPhi','ptRho'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('ptAdd').click();}));
+document.getElementById('hklAdd').addEventListener('click',()=>{const h=to3(parseIdx(document.getElementById('hklIn').value));if(!h)return log('<span class="muted">指數格式例如 111、1-10、10-11。</span>');snap();const it=addFace(h,'');log(`<b>${nameHTML(it)}</b> ${fPR(it.v)}`);renderAll();});
+document.getElementById('hklIn').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('hklAdd').click();});
+function delSel(){if(!S.sel.length)return;snap();const s=new Set(S.sel);S.items=S.items.filter(i=>!s.has(i.id));S.sel=[];renderAll();}
+document.getElementById('delSel').addEventListener('click',delSel);
+
+/* ---------- 視圖、總渲染 ---------- */
+function setView(v){S.view=v;document.querySelectorAll('#viewSeg button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===v));
+  document.getElementById('wrapNet').hidden=v!=='net';document.getElementById('barNet').hidden=v!=='net';document.getElementById('wrap3d').hidden=v!=='3d';document.getElementById('bar3d').hidden=v!=='3d';
+  if(v==='3d')render3D();else renderNet();}
+function sync3d(){document.querySelectorAll('[data-o3]').forEach(cb=>cb.checked=V3.o[cb.dataset.o3]);}
+document.getElementById('viewSeg').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)setView(b.dataset.view);});
+document.getElementById('paneSeg').addEventListener('click',e=>{const b=e.target.closest('[data-pane]');if(!b)return;document.querySelectorAll('#paneSeg button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  for(const p of ['ex','con','cry'])document.getElementById('pane-'+p).hidden=p!==b.dataset.pane;});
+function renderAll(){renderNet();renderTiles();renderStatus();renderResult();renderForms();if(S.view==='3d')render3D();}
+const rr=document.getElementById('netRot');rr.addEventListener('input',()=>{S.netRot=+rr.value;document.getElementById('netRotVal').textContent=rotTxt(S.netRot);renderOverlay();renderStatus();});
+document.getElementById('netAlign').addEventListener('click',()=>{const {pts,gcs}=selK();
+  if(gcs.length)setNetRot(alignGC(gcs[0].v),true);else if(pts.length>=2){const p=cross(pts[0].v,pts[1].v);if(vlen(p)>1e-9)setNetRot(alignGC(unit(p)),true);}else if(pts.length===1)setNetRot(alignPt(pts[0].v),true);});
+document.getElementById('clickAdd').addEventListener('change',e=>{S.clickAdd=e.target.checked;});
+document.querySelectorAll('[data-o3]').forEach(cb=>cb.addEventListener('change',()=>{V3.o[cb.dataset.o3]=cb.checked;render3D();}));
+document.getElementById('v3top').addEventListener('click',()=>{V3.yaw=0;V3.pitch=90;render3D();});
+document.getElementById('v3def').addEventListener('click',()=>{V3.yaw=-32;V3.pitch=20;render3D();});
+document.getElementById('undoBtn').addEventListener('click',undo);
+document.getElementById('clearBtn').addEventListener('click',()=>{snap();S.items=[];S.forms=[];S.sel=[];S.log=[];syncCrystal();renderAll();});
+document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea'))return;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo();}
+  else if(e.key==='Escape'){S.sel=[];renderAll();}else if((e.key==='Delete'||e.key==='Backspace')&&S.sel.length){e.preventDefault();delSel();}});
+new ResizeObserver(()=>{if(S.view==='net')renderNet();else render3D();}).observe(document.querySelector('.stage'));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render3D);
+new MutationObserver(render3D).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+syncCrystal();openEx('t1',0,false);
+window.WT={S,EX,goStep,openEx,setView};
+</script>
+
+</body>
+</html>
