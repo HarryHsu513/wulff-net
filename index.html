@@ -136,7 +136,8 @@ svg text{font-family:var(--font)}
     <div class="bar" id="barNet">
       <span class="lab">描圖紙轉角</span>
       <input type="range" id="netRot" min="-180" max="180" step="0.5" value="0" aria-label="描圖紙轉角（正值為逆時針）">
-      <span class="num" id="netRotVal" style="min-width:6.5em">0°</span>
+      <span class="row" style="gap:6px;flex-wrap:nowrap"><input id="netRotIn" class="in" style="width:4.8em" inputmode="decimal" value="0" aria-label="描圖紙轉角（度）"><span class="lab">°</span></span>
+      <div class="seg inline" id="dirSeg" role="tablist" aria-label="旋轉方向"><button data-dir="ccw" aria-selected="true">逆時針</button><button data-dir="cw" aria-selected="false">順時針</button></div>
       <button class="btn" id="netAlign">對齊所選</button>
       <label class="swl"><input type="checkbox" class="sw" id="clickAdd"> 點擊加點</label>
     </div>
@@ -435,7 +436,11 @@ const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;let an
 function animate(ms,fn){return new Promise(res=>{if(reduceMotion||ms<=0){fn(1);res();return;}const my=++animToken,t0=performance.now();
   const tick=now=>{if(my!==animToken){fn(1);res();return;}const t=clamp((now-t0)/ms,0,1);fn(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);if(t<1)requestAnimationFrame(tick);else res();};requestAnimationFrame(tick);});}
 const rotTxt=d=>Math.abs(d)<0.05?'0°':`${f1(Math.abs(d))} ${d>0?'逆時針':'順時針'}`;
-function syncRot(){document.getElementById('netRot').value=S.netRot;document.getElementById('netRotVal').textContent=rotTxt(S.netRot);}
+let rotDir='ccw';
+function syncRot(){document.getElementById('netRot').value=S.netRot;const inp=document.getElementById('netRotIn');
+  if(Math.abs(S.netRot)>0.05)rotDir=S.netRot>0?'ccw':'cw';if(document.activeElement!==inp)inp.value=String(+Math.abs(S.netRot).toFixed(1));
+  document.querySelectorAll('#dirSeg button').forEach(b=>b.setAttribute('aria-selected',b.dataset.dir===rotDir));}
+function applyRotInput(){const v=parseAng(document.getElementById('netRotIn').value);if(!isFinite(v))return syncRot();setNetRot(rotDir==='ccw'?v:-v,true);}
 async function setNetRot(target,anim){target=normPhi(target);if(!anim){S.netRot=target;syncRot();renderOverlay();renderStatus();return;}
   const from=S.netRot,d=normPhi(target-from);await animate(Math.min(1400,300+Math.abs(d)*8),t=>{S.netRot=from+d*t;syncRot();renderOverlay();renderStatus();});S.netRot=target;syncRot();renderOverlay();}
 const netN=()=>fromPR(-90+S.netRot,90);
@@ -716,7 +721,9 @@ document.getElementById('viewSeg').addEventListener('click',e=>{const b=e.target
 document.getElementById('paneSeg').addEventListener('click',e=>{const b=e.target.closest('[data-pane]');if(!b)return;document.querySelectorAll('#paneSeg button').forEach(x=>x.setAttribute('aria-selected',x===b));
   for(const p of ['ex','con','cry'])document.getElementById('pane-'+p).hidden=p!==b.dataset.pane;});
 function renderAll(){renderNet();renderTiles();renderStatus();renderResult();renderForms();if(S.view==='3d')render3D();}
-const rr=document.getElementById('netRot');rr.addEventListener('input',()=>{S.netRot=+rr.value;document.getElementById('netRotVal').textContent=rotTxt(S.netRot);renderOverlay();renderStatus();});
+const rr=document.getElementById('netRot');rr.addEventListener('input',()=>{S.netRot=+rr.value;syncRot();renderOverlay();renderStatus();});
+const rin=document.getElementById('netRotIn');rin.addEventListener('change',applyRotInput);rin.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();rin.blur();applyRotInput();}});
+document.getElementById('dirSeg').addEventListener('click',e=>{const b=e.target.closest('[data-dir]');if(!b)return;rotDir=b.dataset.dir;applyRotInput();});
 document.getElementById('netAlign').addEventListener('click',()=>{const {pts,gcs}=selK();
   if(gcs.length)setNetRot(alignGC(gcs[0].v),true);else if(pts.length>=2){const p=cross(pts[0].v,pts[1].v);if(vlen(p)>1e-9)setNetRot(alignGC(unit(p)),true);}else if(pts.length===1)setNetRot(alignPt(pts[0].v),true);});
 document.getElementById('clickAdd').addEventListener('change',e=>{S.clickAdd=e.target.checked;});
@@ -734,6 +741,5 @@ new MutationObserver(render3D).observe(document.documentElement,{attributes:true
 syncCrystal();openEx('ang',0,false);
 window.WT={S,EX,goStep,openEx,setView};
 </script>
-
 </body>
 </html>
