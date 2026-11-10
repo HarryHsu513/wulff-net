@@ -731,7 +731,7 @@ new ResizeObserver(()=>{if(S.view==='net')renderNet();else render3D();}).observe
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render3D);
 new MutationObserver(render3D).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
-syncCrystal();openEx('t1',0,false);
+syncCrystal();openEx('ang',0,false);
 window.WT={S,EX,goStep,openEx,setView};
 </script>
 
